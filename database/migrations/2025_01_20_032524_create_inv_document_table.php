@@ -11,8 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('dn_detail', function (Blueprint $table) {
-            $table->id();
+        Schema::create('inv_document', function (Blueprint $table) {
+            $table->id('inv_doc_id');
+
+            // Foreign key to inv_header
+            $table->string('inv_no', 255);
+            $table->foreign('inv_no')->references('inv_no')->on('inv_header')->onDelete('cascade');
+
+            $table->string('file', 255);
             $table->timestamps();
         });
     }
@@ -22,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('dn_detail');
+        Schema::dropIfExists('inv_document');
     }
 };

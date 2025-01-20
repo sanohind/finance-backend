@@ -11,8 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('business_partner', function (Blueprint $table) {
-            $table->id();
+        Schema::create('inv_header', function (Blueprint $table) {
+            $table->string('inv_no', 255)->primary();
+            $table->date('inv_date');
+            $table->string('inv_faktur');
+            $table->string('inv_supplier');
+            $table->string('status');
+            $table->string('reason');
             $table->timestamps();
         });
     }
@@ -22,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('business_partner');
+        Schema::dropIfExists('inv_header');
     }
 };

@@ -11,8 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('user', function (Blueprint $table) {
-            $table->id();
+        Schema::connection('mysql')->create('user', function (Blueprint $table) {
+            $table->id('user_id');
+
+            // Foreign key column bp_code from table bussiness_partner
+            $table->string('bp_code',25);
+            $table->foreign('bp_code')->references('bp_code')->on('business_partner')->onDelete('cascade');
+
+            $table->string('name',255)->nullable();
+            $table->string('role',25)->nullable();
+            $table->integer('status')->nullable();
+            $table->string('username',25)->nullable();
+            $table->string('password',255)->nullable();
+
+            // tambahan email
+            $table->string('email',255)->nullable();
             $table->timestamps();
         });
     }
