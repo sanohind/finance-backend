@@ -13,8 +13,8 @@ class UserController extends Controller
     {
         $request->validate([
             'bp_code' => 'required|string|max:25',
-            'name'    => 'nullable|string|max:255',
-            'role'    => 'nullable|string|max:25',
+            'name'    => 'required|string|max:255',
+            'role'    => 'required|string|max:25',
             'status'  => 'nullable|integer',
             'username'=> 'nullable|string|max:25',
             'password'=> 'nullable|string|max:255',
