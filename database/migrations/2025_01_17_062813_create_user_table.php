@@ -16,7 +16,6 @@ return new class extends Migration
 
             // Foreign key column bp_code from table bussiness_partner
             $table->string('bp_code',25);
-            $table->foreign('bp_code')->references('bp_code')->on('business_partner')->onDelete('cascade');
 
             $table->string('name',255)->nullable();
             $table->string('role',25)->nullable();
