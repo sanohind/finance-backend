@@ -5,21 +5,45 @@ namespace App\Http\Controllers\Api\SupplierFinance;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Http\Requests\SupplierInvHeaderStoreRequest;
+use Illuminate\Support\Facades\Auth;
 use App\Models\InvHeader;
 use App\Models\InvDocument;
 use App\Models\InvLine;
 
 class SupplierInvHeaderController extends Controller
 {
+    public function getInvHeader()
+    {
+        $sp_code = Auth::user()->bp_code;
+
+        $invHeaders = InvHeader::where('bp_code', $sp_code)->get();
+        return response()->json($invHeaders);
+    }
+
     public function store(SupplierInvHeaderStoreRequest $request)
     {
+        $sp_code = Auth::user()->bp_code;
+
         $request->validated();
+
+        $total_dpp = 0;
+
+        foreach ($request->inv_line_detail as $line) {
+            $invLine = InvLine::find($line['id']);
+            $total_dpp += $invLine->receipt_qty * $invLine->price;
+        }
+
+        $tax = $total_dpp * 0.11;
+        $total_amount = $total_dpp + $tax;
 
         InvHeader::create([
             'inv_no' => $request->inv_no,
             'inv_date' => $request->inv_date,
             'inv_faktur' => $request->inv_faktur,
-            'inv_supplier' => $request->inv_supplier,
+            'inv_supplier' => $request->$sp_code,
+            'total_dpp' => $total_dpp,
+            'tax' => $tax,
+            'total_amount' => $total_amount,
             'status' => $request->status,
             'reason' => $request->reason,
         ]);

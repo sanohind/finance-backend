@@ -15,7 +15,14 @@ return new class extends Migration
             $table->string('inv_no', 255)->primary();
             $table->date('inv_date')->nullable();
             $table->string('inv_faktur')->nullable();
+
+            // Foreign
             $table->string('inv_supplier')->nullable();
+            $table->foreign('inv_supplier')->references('bp_code')->on('user')->onDelete('cascade');
+
+            $table->integer('total_dpp')->nullable();
+            $table->integer('tax')->nullable();
+            $table->integer('total_amount')->nullable();
             $table->string('status')->nullable();
             $table->string('reason')->nullable();
             $table->timestamps();
