@@ -15,10 +15,10 @@ return new class extends Migration
             $table->id('inv_doc_id');
 
             // Foreign key to inv_header
-            $table->string('inv_no', 255);
+            $table->string('inv_no', 255)->nullable();
             $table->foreign('inv_no')->references('inv_no')->on('inv_header')->onDelete('cascade');
 
-            $table->string('file', 255);
+            $table->string('file', 255)->nullable();
             $table->timestamps();
         });
     }

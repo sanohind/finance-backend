@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class INV_Header extends Model
+class InvHeader extends Model
 {
     use HasFactory, Notifiable;
 
@@ -30,11 +30,11 @@ class INV_Header extends Model
 
     public function invLine(): HasMany
     {
-        return $this->hasMany(INV_Line::class, 'inv_no', 'inv_no');
+        return $this->hasMany(InvLine::class, 'inv_no', 'inv_no');
     }
 
     public function invDocument(): HasMany
     {
-        return $this->hasMany(INV_Document::class, 'inv_no', 'inv_no');
+        return $this->hasMany(InvDocument::class, 'inv_no', 'inv_no');
     }
 }

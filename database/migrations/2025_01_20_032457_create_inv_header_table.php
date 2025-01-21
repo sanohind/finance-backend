@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('inv_header', function (Blueprint $table) {
             $table->string('inv_no', 255)->primary();
-            $table->date('inv_date');
-            $table->string('inv_faktur');
-            $table->string('inv_supplier');
-            $table->string('status');
-            $table->string('reason');
+            $table->date('inv_date')->nullable();
+            $table->string('inv_faktur')->nullable();
+            $table->string('inv_supplier')->nullable();
+            $table->string('status')->nullable();
+            $table->string('reason')->nullable();
             $table->timestamps();
         });
     }

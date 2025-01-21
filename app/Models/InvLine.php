@@ -7,23 +7,22 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class INV_Document extends Model
+class InvLine extends Model
 {
     use HasFactory, Notifiable;
 
     protected $connection = "mysql";
 
-    protected $primaryKey = "inv_doc_id";
+    protected $primaryKey = "inv_line_id";
 
-    protected $table = "inv_document";
+    protected $table = "inv_line";
 
     protected $fillable = [
         'inv_no',
-        'file',
     ];
 
     public function invHeader(): BelongsTo
     {
-        return $this->belongsTo(INV_Header::class, 'inv_no', 'inv_no');
+        return $this->belongsTo(InvHeader::class, 'inv_no', 'inv_no');
     }
 }
