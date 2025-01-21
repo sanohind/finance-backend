@@ -30,6 +30,11 @@ class SupplierInvHeaderStoreRequest extends FormRequest
             'inv_supplier' => 'required|string|50',
             'status'       => 'nullable|string',
             'reason'       => 'nullable|string',
+            'invoice_file' => 'nullable|file|mimes:pdf|max:2048',
+            'fakturpajak_file' => 'nullable|file|mimes:pdf|max:2048',
+            'suratjalan_file' => 'nullable|file|mimes:pdf|max:2048',
+            'po_file' => 'nullable|file|mimes:pdf|max:2048',
+            'inv_line_detail' => 'required|array',
         ];
     }
 
