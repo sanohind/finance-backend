@@ -52,25 +52,25 @@ class SupplierInvHeaderController extends Controller
 
         if ($request->hasFile('invoice_file')) {
             $path = $request->file('invoice_file')
-                ->storeAs('invoices', 'INVOICE_'.$request->inv_no.'.pdf');
+                ->storeAs('public/invoices', 'INVOICE_'.$request->inv_no.'.pdf');
             $files['invoice'] = $path;
         }
 
         if ($request->hasFile('fakturpajak_file')) {
             $path = $request->file('fakturpajak_file')
-                ->storeAs('faktur', 'FAKTURPAJAK_'.$request->inv_no.'.pdf');
+                ->storeAs('public/faktur', 'FAKTURPAJAK_'.$request->inv_no.'.pdf');
             $files['fakturpajak'] = $path;
         }
 
         if ($request->hasFile('suratjalan_file')) {
             $path = $request->file('suratjalan_file')
-                ->storeAs('suratjalan', 'SURATJALAN_'.$request->inv_no.'.pdf');
+                ->storeAs('public/suratjalan', 'SURATJALAN_'.$request->inv_no.'.pdf');
             $files['suratjalan'] = $path;
         }
 
         if ($request->hasFile('po_file')) {
             $path = $request->file('po_file')
-                ->storeAs('po', 'PO_'.$request->inv_no.'.pdf');
+                ->storeAs('public/po', 'PO_'.$request->inv_no.'.pdf');
             $files['po'] = $path;
         }
 
