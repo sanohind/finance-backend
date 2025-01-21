@@ -66,7 +66,7 @@ class UserUpdateRequest extends FormRequest
         throw new HttpResponseException(
             response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
+                'message' => 'Validation error',
                 'errors'  => $validator->errors(),
             ], 422)
         );

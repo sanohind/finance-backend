@@ -9,7 +9,7 @@ use App\Models\InvHeader;
 use App\Models\InvDocument;
 use App\Models\InvLine;
 
-class SupplierInvHeader extends Controller
+class SupplierInvHeaderController extends Controller
 {
     public function store(SupplierInvHeaderStoreRequest $request)
     {
