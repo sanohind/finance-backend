@@ -9,13 +9,24 @@ use App\Models\InvLine;
 
 class SupplierInvLineController extends Controller
 {
-    public function getInvLine()
+    public function getInvLineTransaction()
     {
         $sp_code = Auth::user()->bp_code;
 
         $invLines = InvLine::where('dn_supplier', $sp_code)
                            ->get();
 
+        return response()->json($invLines);
+    }
+
+    public function getInvLine($inv_no)
+    {
+        $sp_code = Auth::user()->bp_code;
+
+        $invLines = InvLine::where('inv_no', $inv_no)
+                            ->where('dn_supplier', $sp_code)
+                            ->get();
+                            
         return response()->json($invLines);
     }
 }
