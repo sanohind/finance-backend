@@ -24,7 +24,7 @@ class UserStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'bp_code' => 'required|string|max:25',
+            'supplier_code' => 'required|string|max:25',
             'name' => 'required|string|max:25',
             'role' => 'required|string|max:25',
             'status' => 'required|string|max:25',
@@ -37,9 +37,9 @@ class UserStoreRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'bp_code.required' => 'The bp_code field is required.',
-            'bp_code.string' => 'The bp_code must be a string.',
-            'bp_code.max' => 'The bp_code may not be greater than 25 characters.',
+            'supplier_code.required' => 'The supplier_code field is required.',
+            'supplier_code.string' => 'The supplier_code must be a string.',
+            'supplier_code.max' => 'The supplier_code may not be greater than 25 characters.',
             'name.required' => 'The name field is required.',
             'name.string' => 'The name must be a string.',
             'name.max' => 'The name may not be greater than 25 characters.',

@@ -24,7 +24,7 @@ class UserUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'bp_code' => 'required|string|max:25',
+            'supplier_code' => 'required|string|max:25',
             'name' => 'required|string|max:25',
             'role' => 'required|string|max:25',
             'password' => 'nullable|string|min:8',
@@ -41,9 +41,9 @@ class UserUpdateRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'bp_code.required' => 'The BP code is required.',
-            'bp_code.string' => 'The BP code must be a string.',
-            'bp_code.max' => 'The BP code may not be greater than 25 characters.',
+            'supplier_code.required' => 'The BP code is required.',
+            'supplier_code.string' => 'The BP code must be a string.',
+            'supplier_code.max' => 'The BP code may not be greater than 25 characters.',
             'name.required' => 'The name is required.',
             'name.string' => 'The name must be a string.',
             'name.max' => 'The name may not be greater than 25 characters.',

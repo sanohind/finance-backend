@@ -5,24 +5,27 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Http\Requests\UserStoreRequest;
+use App\Http\Requests\UserUpdateRequest;
 
 class UserController extends Controller
 {
     // Create new user (bp_code required)
-    public function store(Request $request)
+    public function store(UserStoreRequest $request)
     {
-        $request->validate([
-            'bp_code' => 'required|string|max:25',
-            'name'    => 'required|string|max:255',
-            'role'    => 'required|string|max:25',
-            'status'  => 'nullable|integer',
-            'username'=> 'nullable|string|max:25',
-            'password'=> 'nullable|string|max:255',
-            'email'   => 'nullable|string|max:255',
+        $request->validated();
+
+        User::create([
+            'bp_code' => $request->suppleir_code,
+            'name' => $request->name,
+            'role' => $request->role,
+            'status' => $request->status,
+            'username' => $request->username,
+            'password' => $request->password,
+            'email' => $request->email,
         ]);
 
-        $user = User::create($request->all());
-        return response()->json($user);
+        return response()->json(['message' => 'User created']);
     }
 
     // Show edit form (get user data)
@@ -33,11 +36,20 @@ class UserController extends Controller
     }
 
     // Update all data
-    public function update(Request $request, $id)
+    public function update(UserUpdateRequest $request, $id)
     {
-        $user = User::findOrFail($id);
-        $user->update($request->all());
-        return response()->json($user);
+        $request->validated();
+
+        User::update([
+            'bp_code' => $request->suppleir_code,
+            'name' => $request->name,
+            'role' => $request->role,
+            'username' => $request->username,
+            'password' => $request->password,
+            'email' => $request->email,
+        ]);
+
+        return response()->json(['message' => 'User updated']);
     }
 
     // Delete account
