@@ -18,7 +18,8 @@ class InvLine extends Model
     protected $table = "inv_line";
 
     protected $fillable = [
-        'inv_no',
+        'supplier_invoice',
+        'supplier_invoice_date',
     ];
 
     public function invHeader(): BelongsTo
