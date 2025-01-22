@@ -16,7 +16,7 @@ class SupplierInvHeaderController extends Controller
     {
         $sp_code = Auth::user()->bp_code;
 
-        $invHeaders = InvHeader::where('bp_code', $sp_code)->get();
+        $invHeaders = InvHeader::where('inv_supplier', $sp_code)->get();
         return response()->json($invHeaders);
     }
 

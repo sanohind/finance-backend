@@ -10,6 +10,12 @@ use App\Http\Requests\UserUpdateRequest;
 
 class UserController extends Controller
 {
+    public function index()
+    {
+        $users = User::all();
+        return response()->json($users);
+    }
+    
     // Create new user (bp_code required)
     public function store(UserStoreRequest $request)
     {
