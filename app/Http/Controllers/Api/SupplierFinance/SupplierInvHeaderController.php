@@ -30,7 +30,7 @@ class SupplierInvHeaderController extends Controller
 
         foreach ($request->inv_line_detail as $line) {
             $invLine = InvLine::find($line['id']);
-            $total_dpp += $invLine->receipt_qty * $invLine->price;
+            $total_dpp += $invLine->receipt_qty * $invLine->po_price;
         }
 
         $tax = $total_dpp * 0.11;
