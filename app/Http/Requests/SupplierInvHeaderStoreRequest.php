@@ -24,8 +24,8 @@ class SupplierInvHeaderStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'inv_no'       => 'required|string|max:255',
-            'inv_date'     => 'required|date',
+            'supplier_invoice' => 'required|string|max:255',
+            'supplier_invoice_date' => 'required|date',
             'inv_faktur'   => 'required|string|50',
             'inv_supplier' => 'required|string|50',
             'status'       => 'nullable|string',

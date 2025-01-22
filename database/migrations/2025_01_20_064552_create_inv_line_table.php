@@ -47,6 +47,10 @@ return new class extends Migration
 
             // inv_date dibuat
             $table->string('supplier_invoice_date')->nullable();
+
+            $table->string('doc_code')->nullable();
+            $table->string('doc_no')->nullable();
+            $table->string('doc_date')->nullable();
             $table->timestamps();
         });
     }
