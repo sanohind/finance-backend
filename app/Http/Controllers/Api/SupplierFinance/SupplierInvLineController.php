@@ -13,7 +13,7 @@ class SupplierInvLineController extends Controller
     {
         $sp_code = Auth::user()->bp_code;
 
-        $invLines = InvLine::where('dn_supplier', $sp_code)
+        $invLines = InvLine::where('supplier_id', $sp_code)
                            ->get();
 
         return response()->json($invLines);
@@ -23,10 +23,10 @@ class SupplierInvLineController extends Controller
     {
         $sp_code = Auth::user()->bp_code;
 
-        $invLines = InvLine::where('inv_no', $inv_no)
-                            ->where('dn_supplier', $sp_code)
+        $invLines = InvLine::where('supplier_invoice', $inv_no)
+                            ->where('supplier_id', $sp_code)
                             ->get();
-                            
+
         return response()->json($invLines);
     }
 }

@@ -10,7 +10,7 @@ class FinanceInvLineController extends Controller
 {
     public function getInvLine($inv_no)
     {
-        $invLines = InvLine::where('inv_no', $inv_no)->get();
+        $invLines = InvLine::where('supplier_invoice', $inv_no)->get();
         return response()->json($invLines);
     }
 }
