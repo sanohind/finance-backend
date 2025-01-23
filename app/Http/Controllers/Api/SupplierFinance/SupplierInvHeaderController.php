@@ -29,7 +29,7 @@ class SupplierInvHeaderController extends Controller
         $total_dpp = 0;
 
         foreach ($request->inv_line_detail as $line) {
-            $invLine = InvLine::find($line['id']);
+            $invLine = InvLine::find($line);
             $total_dpp += $invLine->receipt_qty * $invLine->po_price;
         }
 
@@ -40,11 +40,11 @@ class SupplierInvHeaderController extends Controller
             'inv_no' => $request->inv_no,
             'inv_date' => $request->inv_date,
             'inv_faktur' => $request->inv_faktur,
-            'inv_supplier' => $request->$sp_code,
+            'inv_supplier' => $request->inv_supplier,
             'total_dpp' => $total_dpp,
             'tax' => $tax,
             'total_amount' => $total_amount,
-            'status' => $request->status,
+            'status' => "In Process",
             'reason' => $request->reason,
         ]);
 
@@ -82,7 +82,7 @@ class SupplierInvHeaderController extends Controller
 
         // Update supplier_invoice in inv_line
         foreach ($request->inv_line_detail as $line) {
-            InvLine::where('id', $line['id'])->update([
+            InvLine::where('inv_line_id', $line)->update([
                 'supplier_invoice' => $request->inv_no,
                 'supplier_invoice_date' => $request->inv_date
             ]);

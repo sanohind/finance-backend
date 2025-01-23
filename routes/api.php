@@ -9,11 +9,19 @@ use App\Http\Controllers\Api\Finance\FinanceInvLineController;
 use App\Http\Controllers\Api\Finance\FinanceInvDocumentController;
 use App\Http\Controllers\Api\SupplierFinance\SupplierInvHeaderController;
 use App\Http\Controllers\Api\SupplierFinance\SupplierInvLineController;
+use App\Http\Controllers\Api\Local2\LocalDataController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
+// Route for sync data from second database
+Route::get('local2/sync-inv-line', [LocalDataController::class, 'syncInvLine'])->middleware('auth:sanctum');
+
 // Admin routes
 Route::middleware(['auth:sanctum', 'userRole:1'])->prefix('super-admin')->group(function () {
+
+    // Route for sync data from second database
+    Route::get('sync-inv-line', [LocalDataController::class, 'syncInvLine'])->middleware('auth:sanctum');
+
     Route::get('index', [UserController::class, 'index']);
     Route::post('store', [UserController::class, 'store']);
     Route::get('{id}/edit', [UserController::class, 'edit']);

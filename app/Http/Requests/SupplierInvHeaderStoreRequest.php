@@ -26,8 +26,8 @@ class SupplierInvHeaderStoreRequest extends FormRequest
         return [
             'inv_no'       => 'required|string|max:255',
             'inv_date'     => 'required|date',
-            'inv_faktur'   => 'required|string|50',
-            'inv_supplier' => 'required|string|50',
+            'inv_faktur'   => 'required|string|max:50',
+            'inv_supplier' => 'required|string|max:50',
             'status'       => 'nullable|string',
             'reason'       => 'nullable|string',
             'invoice_file' => 'nullable|file|mimes:pdf|max:2048',

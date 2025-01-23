@@ -24,6 +24,9 @@ class InvHeader extends Model
         'inv_date',
         'inv_faktur',
         'inv_supplier',
+        'total_dpp',
+        'tax',
+        'total_amount',
         'status',
         'reason',
     ];
