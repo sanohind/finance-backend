@@ -16,7 +16,9 @@ class SupplierInvHeaderController extends Controller
     {
         $sp_code = Auth::user()->bp_code;
 
-        $invHeaders = InvHeader::where('inv_supplier', $sp_code)->get();
+        // Fetch inv_headers filtered by the authenticated user's bp_code
+        $invHeaders = InvHeader::where('bp_code', $sp_code)->get();
+
         return response()->json($invHeaders);
     }
 
@@ -46,6 +48,7 @@ class SupplierInvHeaderController extends Controller
             'total_amount' => $total_amount,
             'status' => "In Process",
             'reason' => $request->reason,
+            'bp_code' => $sp_code, // Autofill with the authenticated user's bp_code
         ]);
 
         $files = [];

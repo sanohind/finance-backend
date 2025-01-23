@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class InvHeader extends Model
 {
@@ -21,6 +22,7 @@ class InvHeader extends Model
 
     protected $fillable = [
         'inv_no',
+        'bp_code',
         'inv_date',
         'inv_faktur',
         'inv_supplier',
@@ -39,5 +41,10 @@ class InvHeader extends Model
     public function invDocument(): HasMany
     {
         return $this->hasMany(InvDocument::class, 'inv_no', 'inv_no');
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'bp_code', 'bp_code');
     }
 }

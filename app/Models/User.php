@@ -3,10 +3,9 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use App\Models\PartnerLocal;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
@@ -32,4 +31,10 @@ class User extends Authenticatable
         'password',
         'email'
     ];
+
+    // Relationship
+    public function InvHeader(): HasMany
+    {
+        return $this->hasMany(InvHeader::class, 'bp_code', 'bp_code');
+    }
 }
