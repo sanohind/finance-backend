@@ -36,7 +36,7 @@ Route::middleware(['auth:sanctum', 'userRole:2'])->prefix('finance')->group(func
     Route::get('inv-header', [FinanceInvHeaderController::class, 'getInvHeader']);
     Route::put('inv-header/{inv_no}', [FinanceInvHeaderController::class, 'update']);
     Route::get('inv-line/{inv_no}', [FinanceInvLineController::class, 'getInvLine']);
-    Route::get('files/{filename}', [FinanceInvDocumentController::class, 'streamFile']);
+    Route::get('files/{folder}/{filename}', [FinanceInvDocumentController::class, 'streamFile']);
 });
 
 // Supplier routes

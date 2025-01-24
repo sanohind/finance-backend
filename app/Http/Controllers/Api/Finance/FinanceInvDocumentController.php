@@ -8,15 +8,19 @@ use Illuminate\Support\Facades\Storage;
 
 class FinanceInvDocumentController extends Controller
 {
-    public function streamFile($filename)
+    public function streamFile($folder, $filename)
     {
-        $path = storage_path('app/public/' . $filename);
+        $relativePath = "public/{$folder}/{$filename}";
 
-        if (!Storage::exists('public/' . $filename)) {
-            abort(404);
+        if (!Storage::disk('public')->exists($relativePath)) {
+            return response()->json(['message' => 'File not found.'], 404);
         }
 
-        return response()->file($path);
+        // Get the absolute path to the file in storage/app/public/<folder>/<filename>.
+        $absolutePath = storage_path("app/public/{$relativePath}");
+
+        // Use response()->file(...) to show/stream the file inline instead of forcing download.
+        return response()->file($absolutePath);
     }
 }
  // Route::get('files/{filename}', [FinanceInvDocumentController::class, 'streamFile'])->middleware('auth');
