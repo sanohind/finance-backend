@@ -21,6 +21,7 @@ Route::middleware(['auth:sanctum', 'userRole:1'])->prefix('super-admin')->group(
 
     // Route for sync data from second database
     Route::get('sync-inv-line', [LocalDataController::class, 'syncInvLine'])->middleware('auth:sanctum');
+    Route::get('business-partners', [UserController::class, 'getBusinessPartner']);
 
     Route::get('index', [UserController::class, 'index']);
     Route::post('store', [UserController::class, 'store']);
