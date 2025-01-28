@@ -20,7 +20,7 @@ Route::get('local2/sync-inv-line', [LocalDataController::class, 'syncInvLine'])-
 Route::middleware(['auth:sanctum', 'userRole:1'])->prefix('super-admin')->group(function () {
 
     // Route for sync data from second database
-    Route::get('sync-inv-line', [LocalDataController::class, 'syncInvLine'])->middleware('auth:sanctum');
+    Route::get('sync-inv-line', [LocalDataController::class, 'syncInvLine']);
     Route::get('business-partners', [UserController::class, 'getBusinessPartner']);
 
     Route::get('index', [UserController::class, 'index']);
