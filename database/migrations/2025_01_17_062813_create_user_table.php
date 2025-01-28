@@ -16,6 +16,7 @@ return new class extends Migration
 
             // Foreign key column bp_code from table bussiness_partner
             $table->string('bp_code',25);
+            $table->index('bp_code');
 
             $table->string('name',255)->nullable();
             $table->string('role',25)->nullable();

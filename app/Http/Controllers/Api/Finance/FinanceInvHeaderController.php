@@ -30,7 +30,7 @@ class FinanceInvHeaderController extends Controller
             case 'Approved':
                 return response()->json(['message' => 'Invoice ' . $inv_no . ' updated']);
             case 'Rejected':
-                InvLine::where('inv_no', $inv_no)->update(['inv_no' => null]);
+                InvLine::where('supplier_invoice', $inv_no)->update(['supplier_invoice' => null]);
                 return response()->json(['message' => 'Invoice ' . $inv_no . ' rejected']);
             default:
                 return response()->json(['message' => 'Invoice ' . $inv_no . ' updated']);

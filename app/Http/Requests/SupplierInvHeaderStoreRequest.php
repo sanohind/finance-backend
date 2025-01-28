@@ -25,15 +25,16 @@ class SupplierInvHeaderStoreRequest extends FormRequest
     {
         return [
             'inv_no'       => 'required|string|max:255',
+            'bp_code'      => 'nullable|string|max:25',
             'inv_date'     => 'required|date',
-            'inv_faktur'   => 'required|string|50',
-            'inv_supplier' => 'required|string|50',
+            'inv_faktur'   => 'required|string|max:50',
+            'inv_supplier' => 'required|string|max:50',
             'status'       => 'nullable|string',
             'reason'       => 'nullable|string',
-            'invoice_file' => 'nullable|file|mimes:pdf|max:2048',
-            'fakturpajak_file' => 'nullable|file|mimes:pdf|max:2048',
-            'suratjalan_file' => 'nullable|file|mimes:pdf|max:2048',
-            'po_file' => 'nullable|file|mimes:pdf|max:2048',
+            'invoice_file' => 'nullable|file|mimes:pdf|max:5000',
+            'fakturpajak_file' => 'nullable|file|mimes:pdf|max:5000',
+            'suratjalan_file' => 'nullable|file|mimes:pdf|max:5000',
+            'po_file' => 'nullable|file|mimes:pdf|max:5000',
             'inv_line_detail' => 'required|array',
         ];
     }

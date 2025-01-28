@@ -13,6 +13,11 @@ return new class extends Migration
     {
         Schema::create('inv_header', function (Blueprint $table) {
             $table->string('inv_no', 255)->primary();
+
+            // Foreign key to user
+            $table->string('bp_code')->nullable();
+            $table->foreign('bp_code')->references('bp_code')->on('user');
+
             $table->date('inv_date')->nullable();
             $table->string('inv_faktur')->nullable();
             $table->string('inv_supplier')->nullable();

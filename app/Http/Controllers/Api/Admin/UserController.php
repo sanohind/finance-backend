@@ -5,17 +5,24 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Local\Partner;
 use App\Http\Requests\UserStoreRequest;
 use App\Http\Requests\UserUpdateRequest;
 
 class UserController extends Controller
 {
+    public function getBusinessPartner()
+    {
+        $partner = Partner::where('bp_code', 'LIKE', 'SLS%')->get();
+        return response()->json($partner);
+    }
+
     public function index()
     {
         $users = User::all();
         return response()->json($users);
     }
-    
+
     // Create new user (bp_code required)
     public function store(UserStoreRequest $request)
     {

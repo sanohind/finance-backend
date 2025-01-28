@@ -9,11 +9,20 @@ use App\Http\Controllers\Api\Finance\FinanceInvLineController;
 use App\Http\Controllers\Api\Finance\FinanceInvDocumentController;
 use App\Http\Controllers\Api\SupplierFinance\SupplierInvHeaderController;
 use App\Http\Controllers\Api\SupplierFinance\SupplierInvLineController;
+use App\Http\Controllers\Api\Local2\LocalDataController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
+// Route for sync data from second database
+Route::get('local2/sync-inv-line', [LocalDataController::class, 'syncInvLine'])->middleware('auth:sanctum');
+
 // Admin routes
 Route::middleware(['auth:sanctum', 'userRole:1'])->prefix('super-admin')->group(function () {
+
+    // Route for sync data from second database
+    Route::get('sync-inv-line', [LocalDataController::class, 'syncInvLine']);
+    Route::get('business-partners', [UserController::class, 'getBusinessPartner']);
+
     Route::get('index', [UserController::class, 'index']);
     Route::post('store', [UserController::class, 'store']);
     Route::get('{id}/edit', [UserController::class, 'edit']);
@@ -27,7 +36,7 @@ Route::middleware(['auth:sanctum', 'userRole:2'])->prefix('finance')->group(func
     Route::get('inv-header', [FinanceInvHeaderController::class, 'getInvHeader']);
     Route::put('inv-header/{inv_no}', [FinanceInvHeaderController::class, 'update']);
     Route::get('inv-line/{inv_no}', [FinanceInvLineController::class, 'getInvLine']);
-    Route::get('files/{filename}', [FinanceInvDocumentController::class, 'streamFile']);
+    Route::get('files/{folder}/{filename}', [FinanceInvDocumentController::class, 'streamFile']);
 });
 
 // Supplier routes
