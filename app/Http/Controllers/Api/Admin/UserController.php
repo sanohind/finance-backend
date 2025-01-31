@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Local\Partner;
 use App\Http\Requests\UserStoreRequest;
 use App\Http\Requests\UserUpdateRequest;
+use App\Http\Resources\UserResource;
 
 class UserController extends Controller
 {
@@ -20,7 +21,7 @@ class UserController extends Controller
     public function index()
     {
         $users = User::all();
-        return response()->json($users);
+        return UserResource::collection($users);
     }
 
     // Create new user (bp_code required)
@@ -45,7 +46,7 @@ class UserController extends Controller
     public function edit($id)
     {
         $user = User::findOrFail($id);
-        return response()->json($user);
+        return new UserResource($user);
     }
 
     // Update all data
@@ -53,8 +54,8 @@ class UserController extends Controller
     {
         $request->validated();
 
-        User::update([
-            'bp_code' => $request->suppleir_code,
+        User::where('user_id', $id)->update([
+            'bp_code' => $request->supplier_code,
             'name' => $request->name,
             'role' => $request->role,
             'username' => $request->username,
@@ -79,6 +80,6 @@ class UserController extends Controller
         $user = User::findOrFail($id);
         $user->status = $status;
         $user->save();
-        return response()->json($user);
+        return new UserResource($user);
     }
 }

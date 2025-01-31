@@ -7,13 +7,14 @@ use Illuminate\Http\Request;
 use App\Models\InvHeader;
 use App\Models\InvLine;
 use App\Http\Requests\FinanceInvHeaderUpdateRequest;
+use App\Http\Resources\InvHeaderResource;
 
 class FinanceInvHeaderController extends Controller
 {
     public function getInvHeader()
     {
         $invHeaders = InvHeader::all();
-        return response()->json($invHeaders);
+        return InvHeaderResource::collection($invHeaders);
     }
 
     public function update(FinanceInvHeaderUpdateRequest $request, $inv_no)

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\InvLine;
+use App\Http\Resources\InvLineResource;
 
 class SupplierInvLineController extends Controller
 {
@@ -13,10 +14,8 @@ class SupplierInvLineController extends Controller
     {
         $sp_code = Auth::user()->bp_code;
 
-        $invLines = InvLine::where('supplier_id', $sp_code)
-                           ->get();
-
-        return response()->json($invLines);
+        $invLines = InvLine::where('supplier_id', $sp_code)->get();
+        return InvLineResource::collection($invLines);
     }
 
     public function getInvLine($inv_no)
@@ -24,9 +23,8 @@ class SupplierInvLineController extends Controller
         $sp_code = Auth::user()->bp_code;
 
         $invLines = InvLine::where('supplier_invoice', $inv_no)
-                            ->where('supplier_id', $sp_code)
-                            ->get();
-
-        return response()->json($invLines);
+                           ->where('supplier_id', $sp_code)
+                           ->get();
+        return InvLineResource::collection($invLines);
     }
 }
