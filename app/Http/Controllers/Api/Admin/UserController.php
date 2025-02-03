@@ -30,7 +30,7 @@ class UserController extends Controller
         $request->validated();
 
         User::create([
-            'bp_code' => $request->suppleir_code,
+            'bp_code' => $request->supplier_code,
             'name' => $request->name,
             'role' => $request->role,
             'status' => $request->status,
