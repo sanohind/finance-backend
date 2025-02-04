@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Http\Requests\SupplierInvHeaderStoreRequest;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Resources\InvHeaderResource;
 use App\Models\InvHeader;
 use App\Models\InvDocument;
 use App\Models\InvLine;
@@ -19,7 +20,7 @@ class SupplierInvHeaderController extends Controller
         // Fetch inv_headers filtered by the authenticated user's bp_code
         $invHeaders = InvHeader::where('bp_code', $sp_code)->get();
 
-        return response()->json($invHeaders);
+        return InvHeaderResource::collection($invHeaders);
     }
 
     public function store(SupplierInvHeaderStoreRequest $request)
@@ -91,7 +92,7 @@ class SupplierInvHeaderController extends Controller
             ]);
         }
 
-        return response()->json(['message' => 'Invoice created']);
+        return new InvHeaderResource(['message' => 'Invoice created']);
     }
 
 }
