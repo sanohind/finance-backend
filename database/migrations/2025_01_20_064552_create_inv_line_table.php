@@ -14,43 +14,59 @@ return new class extends Migration
         Schema::create('inv_line', function (Blueprint $table) {
             $table->id('inv_line_id');
 
-
             $table->string('po_no')->nullable();
-            $table->string('supplier_id')->nullable();
-            $table->string('supplier')->nullable();
-            $table->date('po_date')->nullable();
-            $table->integer('po_qty')->nullable();
-            $table->integer('po_price')->nullable();
+
+            $table->string('bp_id')->nullable();
+            $table->string('bp_name')->nullable();
             $table->string('currency')->nullable();
-            $table->float('rate')->nullable();
+            $table->string('po_type')->nullable();
+            $table->string('po_reference')->nullable();
+            $table->integer('po_line')->nullable();
+            $table->integer('po_sequence')->nullable();
+            $table->integer('po_receipt_sequence')->nullable();
+
+            $table->date('actual_receipt_date')->nullable();
+            $table->integer('actual_receipt_year')->nullable();
+            $table->integer('actual_receipt_period')->nullable();
+
             $table->string('receipt_no')->nullable();
-            $table->date('receipt_date')->nullable();
             $table->string('receipt_line')->nullable();
-            $table->string('item')->nullable();
-            $table->string('item_desc')->nullable();
-            $table->string('old_partno')->nullable();
-            $table->integer('receipt_qty')->nullable();
-            $table->string('receipt_unit')->nullable();
+            $table->string('gr_no')->nullable();
             $table->string('packing_slip')->nullable();
-            $table->string('receipt_status')->nullable();
-            $table->string('warehouse')->nullable();
-            $table->integer('extend_price')->nullable();
-            $table->integer('extend_price_idr')->nullable();
 
-            $table->string('inv_doc')->nullable();
-            // Tenggat Tanggal Pembayaran
-            $table->string('inv_date')->nullable();
+            $table->string('item_no')->nullable();
+            $table->string('ics_code')->nullable();
+            $table->string('ics_part')->nullable();
+            $table->string('part_no')->nullable();
+            $table->string('item_desc')->nullable();
+            $table->string('item_group')->nullable();
+            $table->string('item_type')->nullable();
+            $table->string('item_type_desc')->nullable();
 
-            // Foreign key to inv_header
-            $table->string( 'supplier_invoice',255)->nullable();
-            $table->foreign('supplier_invoice')->references('inv_no')->on('inv_header')->onDelete('cascade');
+            $table->integer('request_qty')->nullable();
+            $table->integer('actual_receipt_qty')->nullable();
+            $table->integer('approve_qty')->nullable();
+            $table->string('unit')->nullable();
 
-            // inv_date dibuat
-            $table->string('supplier_invoice_date')->nullable();
+            $table->decimal('receipt_amount', 16, 2)->nullable();
+            $table->decimal('receipt_unit_price', 16, 2)->nullable();
 
-            $table->string('doc_code')->nullable();
-            $table->string('doc_no')->nullable();
-            $table->string('doc_date')->nullable();
+            $table->boolean('is_final_receipt')->default(false);
+            $table->boolean('is_confirmed')->default(false);
+
+            $table->string('inv_doc_no')->nullable();
+            $table->date('inv_doc_date')->nullable();
+            $table->decimal('inv_qty', 16, 2)->nullable();
+            $table->decimal('inv_amount', 16, 2)->nullable();
+
+            $table->string('inv_supplier_no')->nullable();
+            $table->foreign('inv_supplier_no')->references('inv_no')->on('inv_header')->onDelete('cascade');
+
+            $table->date('inv_due_date')->nullable();
+
+            $table->string('payment_doc')->nullable();
+            $table->date('payment_doc_date')->nullable();
+
             $table->timestamps();
         });
     }
