@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('inv_pph', function (Blueprint $table) {
-            $table->string('pph_id', 255)->primary();
+            $table->id('pph_id');
             $table->string('pph_description', 255)->nullable();
-            $table->double('pph_rate')->nullable();
+            $table->decimal('pph_rate')->nullable();
             $table->timestamps();
         });
     }

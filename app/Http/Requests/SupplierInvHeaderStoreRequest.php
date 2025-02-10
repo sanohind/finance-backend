@@ -25,12 +25,13 @@ class SupplierInvHeaderStoreRequest extends FormRequest
     {
         return [
             'inv_no'       => 'required|string|max:255',
-            'bp_code'      => 'nullable|string|max:25',
             'inv_date'     => 'required|date',
             'inv_faktur'   => 'required|string|max:50',
             'inv_supplier' => 'required|string|max:50',
             'status'       => 'nullable|string',
             'reason'       => 'nullable|string',
+            'created_by'    => 'nullable|string',
+            'ppn_id'       => 'required|exists:inv_ppn,ppn_id',
             'invoice_file' => 'nullable|file|mimes:pdf|max:5000',
             'fakturpajak_file' => 'nullable|file|mimes:pdf|max:5000',
             'suratjalan_file' => 'nullable|file|mimes:pdf|max:5000',
