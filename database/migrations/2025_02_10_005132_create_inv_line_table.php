@@ -60,8 +60,6 @@ return new class extends Migration
             $table->decimal('inv_amount', 16, 2)->nullable();
 
             $table->string('inv_supplier_no')->nullable();
-            $table->foreign('inv_supplier_no')->references('inv_no')->on('inv_header')->onDelete('cascade');
-
             $table->date('inv_due_date')->nullable();
 
             $table->string('payment_doc')->nullable();
