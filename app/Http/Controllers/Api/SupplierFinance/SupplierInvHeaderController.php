@@ -31,25 +31,21 @@ class SupplierInvHeaderController extends Controller
 
         $total_dpp = 0;
 
-        // 1) Gather total DPP based on selected inv_line_detail
+        // Gather total DPP from selected inv lines
         foreach ($request->inv_line_detail as $line) {
             $invLine = InvLine::find($line);
             $total_dpp += $invLine->receipt_qty * $invLine->po_price;
         }
 
-        // 2) Fetch the chosen PPN record (ID = 1 => 10%, ID = 2 => 11%, etc.)
+        // Fetch the chosen PPN record
         $ppn = InvPpn::find($request->ppn_id);
-        $ppnRate = $ppn ? $ppn->ppn_rate : 0.0;          // e.g. 0.10 or 0.11
-        $ppnDescription = $ppn ? $ppn->ppn_description : ''; // e.g. "10%" or "11%"
+        $ppnRate         = $ppn ? $ppn->ppn_rate : 0.0;
+        $ppnDescription  = $ppn ? $ppn->ppn_description : '';
 
-        // 3) Calculate tax_base_amount and tax_amount
-        $tax_base_amount = $total_dpp;                          // base amount
+        $tax_base_amount = $total_dpp;
         $tax_amount      = $tax_base_amount + ($tax_base_amount * $ppnRate);
+        $total_amount    = $tax_amount;
 
-        // 4) total_amount becomes whatever your final total is (here, the same as tax_amount)
-        $total_amount = $tax_amount;
-
-        // 5) Create the InvHeader record using your new columns
         $invHeader = InvHeader::create([
             'inv_no'          => $request->inv_no,
             'bp_code'         => $sp_code,
@@ -62,50 +58,46 @@ class SupplierInvHeaderController extends Controller
             'tax_description' => $ppnDescription,
             'tax_base_amount' => $tax_base_amount,
             'tax_amount'      => $tax_amount,
-
             'total_amount'    => $total_amount,
             'status'          => 'New',
             'reason'          => $request->reason,
             'created_by'      => Auth::user()->name,
         ]);
 
-        // 6) Handle file uploads
+        // Handle file uploads if needed
         $files = [];
-
         if ($request->hasFile('invoice_file')) {
-            $path = $request->file('invoice_file')->storeAs('public/invoices', 'INVOICE_'.$request->inv_no.'.pdf');
-            $files['invoice'] = $path;
+            $files['invoice'] = $request->file('invoice_file')
+                ->storeAs('public/invoices', 'INVOICE_'.$request->inv_no.'.pdf');
         }
-
         if ($request->hasFile('fakturpajak_file')) {
-            $path = $request->file('fakturpajak_file')->storeAs('public/faktur', 'FAKTURPAJAK_'.$request->inv_no.'.pdf');
-            $files['fakturpajak'] = $path;
+            $files['fakturpajak'] = $request->file('fakturpajak_file')
+                ->storeAs('public/faktur', 'FAKTURPAJAK_'.$request->inv_no.'.pdf');
         }
-
         if ($request->hasFile('suratjalan_file')) {
-            $path = $request->file('suratjalan_file')->storeAs('public/suratjalan', 'SURATJALAN_'.$request->inv_no.'.pdf');
-            $files['suratjalan'] = $path;
+            $files['suratjalan'] = $request->file('suratjalan_file')
+                ->storeAs('public/suratjalan', 'SURATJALAN_'.$request->inv_no.'.pdf');
         }
-
         if ($request->hasFile('po_file')) {
-            $path = $request->file('po_file')->storeAs('public/po', 'PO_'.$request->inv_no.'.pdf');
-            $files['po'] = $path;
+            $files['po'] = $request->file('po_file')
+                ->storeAs('public/po', 'PO_'.$request->inv_no.'.pdf');
         }
 
+        // Save file references
         InvDocument::create([
             'inv_no' => $request->inv_no,
             'file'   => json_encode($files),
         ]);
 
-        // 7) Update supplier_invoice in inv_line
+        // Update inv_line references
         foreach ($request->inv_line_detail as $line) {
             InvLine::where('inv_line_id', $line)->update([
+                // Update whichever field relates to the inv_no
                 'inv_supplier_no'      => $request->inv_no,
-                'inv_due_date'    => $request->inv_date,
+                'inv_due_date' => $request->inv_date,
             ]);
         }
 
-        // 8) Return the created InvHeader via the resource
         return new InvHeaderResource($invHeader);
     }
 
