@@ -13,7 +13,8 @@ class FinanceInvHeaderUpdateRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::user()->role == 2;    }
+        return Auth::user()->role == 2;
+    }
 
     /**
      * Get the validation rules that apply to the request.
@@ -23,9 +24,13 @@ class FinanceInvHeaderUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'inv_no'       => 'required|string|max:255',
-            'status'       => 'required|string|In:Approved,Rejected',
-            'reason'       => 'nullable|string',
+            'pph_id'           => 'required|exists:inv_pph,pph_id',
+            'pph_base_amount'  => 'required|numeric',
+            'inv_line_remove'       => 'nullable|array',
+            'inv_line_remove.*'     => 'exists:inv_line,inv_line_id',
+            'status'           => 'required|string|max:50|in:Ready To Payment,Rejected',
+            'reason'           => 'nullable|string|max:255',
+            'updated_by'       => 'nullable|string|max:100',
         ];
     }
 

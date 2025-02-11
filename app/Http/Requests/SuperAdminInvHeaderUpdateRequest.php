@@ -29,7 +29,7 @@ class SuperAdminInvHeaderUpdateRequest extends FormRequest
             'pph_base_amount'  => 'required|numeric',
             'inv_line_remove'       => 'nullable|array',
             'inv_line_remove.*'     => 'exists:inv_line,inv_line_id',
-            'status'           => 'required|string|max:50',
+            'status'           => 'required|string|max:50|in:Ready To Payment,Rejected',
             'reason'           => 'nullable|string|max:255',
             'updated_by'       => 'nullable|string|max:100',
         ];
