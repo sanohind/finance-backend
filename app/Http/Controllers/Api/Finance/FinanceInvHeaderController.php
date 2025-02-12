@@ -86,4 +86,24 @@ class FinanceInvHeaderController extends Controller
                 ]);
         }
     }
+
+    public function updateStatusToInProcess($inv_no)
+    {
+        $invHeader = InvHeader::where('inv_no', $inv_no)->where('status', 'New')->firstOrFail();
+
+        $invHeader->update([
+            'status' => 'In Process',
+            'updated_by' => Auth::user()->name,
+        ]);
+
+        return response()->json([
+            'message' => "Invoice {$inv_no} status updated to In Process"
+        ]);
+    }
+
+    // Example usage: call this function when the invoice number is clicked
+    // document.getElementById('invoice-number').addEventListener('click', function() {
+    //     const inv_no = this.dataset.invNo; // Assuming the invoice number is stored in a data attribute
+    //     updateStatusToInProcess(inv_no);
+    // });
 }
