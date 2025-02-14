@@ -22,7 +22,24 @@ return new class extends Migration
             $table->string('inv_faktur')->nullable();
             $table->string('inv_supplier')->nullable();
             $table->integer('total_dpp')->nullable();
-            $table->integer('tax')->nullable();
+
+            // Relation PPN
+            $table->unsignedBigInteger('ppn_id')->nullable();
+            $table->foreign('ppn_id')->references('ppn_id')->on('inv_ppn');
+            $table->string('tax_description')->nullable();
+            $table->integer('tax_base_amount')->nullable();
+            $table->integer('tax_amount')->nullable();
+
+            // Relation PPH
+            $table->unsignedBigInteger('pph_id')->nullable();
+            $table->foreign('pph_id')->references('pph_id')->on('inv_pph');
+            $table->string('pph_description')->nullable();
+            $table->integer('pph_base_amount')->nullable();
+            $table->integer('pph_amount')->nullable();
+
+            $table->string('created_by')->nullable();
+            $table->string('updated_by')->nullable();
+
             $table->integer('total_amount')->nullable();
             $table->string('status')->nullable();
             $table->string('reason')->nullable();

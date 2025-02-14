@@ -22,7 +22,7 @@ class SupplierInvLineController extends Controller
     {
         $sp_code = Auth::user()->bp_code;
 
-        $invLines = InvLine::where('supplier_invoice', $inv_no)
+        $invLines = InvLine::where('inv_supplier_no', $inv_no)
                            ->where('supplier_id', $sp_code)
                            ->get();
         return InvLineResource::collection($invLines);

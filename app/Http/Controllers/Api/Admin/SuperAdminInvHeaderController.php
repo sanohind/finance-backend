@@ -1,31 +1,35 @@
 <?php
 
-namespace App\Http\Controllers\Api\SupplierFinance;
+namespace App\Http\Controllers\Api\Admin;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Http\Requests\SupplierInvHeaderStoreRequest;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Resources\InvHeaderResource;
+use App\Http\Requests\SuperAdminInvHeaderStoreRequest;
 use Illuminate\Support\Facades\DB;
+use App\Http\Resources\InvHeaderResource;
+use App\Http\Requests\SuperAdminInvHeaderUpdateRequest;
 use App\Models\InvHeader;
-use App\Models\InvDocument;
 use App\Models\InvLine;
+use App\Models\InvDocument;
 use App\Models\InvPpn;
+use App\Models\InvPph;
 
-class SupplierInvHeaderController extends Controller
+class SuperAdminInvHeaderController extends Controller
 {
     public function getInvHeader()
     {
-        $sp_code = Auth::user()->bp_code;
-
-        // Fetch inv_headers filtered by the authenticated user's bp_code
-        $invHeaders = InvHeader::where('bp_code', $sp_code)->get();
-
+        $invHeaders = InvHeader::all();
         return InvHeaderResource::collection($invHeaders);
     }
 
-    public function store(SupplierInvHeaderStoreRequest $request)
+    public function getInvHeaderByBpCode($bp_code)
+    {
+        $invHeaders = InvHeader::where('bp_code', $bp_code)->get();
+        return InvHeaderResource::collection($invHeaders);
+    }
+
+    public function store(SuperAdminInvHeaderStoreRequest $request)
     {
         $invHeader = DB::transaction(function () use ($request) {
             $sp_code = Auth::user()->bp_code;
@@ -44,10 +48,12 @@ class SupplierInvHeaderController extends Controller
             $ppnRate         = $ppn ? $ppn->ppn_rate : 0.0;
             $ppnDescription  = $ppn ? $ppn->ppn_description : '';
 
+            // Calculate amounts
             $tax_base_amount = $total_dpp;
             $tax_amount      = $tax_base_amount + ($tax_base_amount * $ppnRate);
             $total_amount    = $tax_amount;
 
+            // Create InvHeader
             $invHeader = InvHeader::create([
                 'inv_no'          => $request->inv_no,
                 'bp_code'         => $sp_code,
@@ -65,7 +71,7 @@ class SupplierInvHeaderController extends Controller
                 'created_by'      => Auth::user()->name,
             ]);
 
-            // Handle file uploads if needed
+            // Handle file uploads
             $files = [];
             if ($request->hasFile('invoice_file')) {
                 $files['invoice'] = $request->file('invoice_file')
@@ -105,4 +111,68 @@ class SupplierInvHeaderController extends Controller
         return new InvHeaderResource($invHeader);
     }
 
+    public function update(SuperAdminInvHeaderUpdateRequest $request, $inv_no)
+    {
+        $invHeader = DB::transaction(function () use ($request, $inv_no) {
+            $request->validated();
+
+            $invHeader = InvHeader::findOrFail($inv_no);
+
+            // 1) Fetch chosen PPH record
+            $pph = InvPph::find($request->pph_id);
+            $pphRate        = $pph ? $pph->pph_rate : 0.0;
+            $pphDescription = $pph ? $pph->pph_description : '';
+
+            // 2) Manually entered pph_base_amount
+            $pphBase = $request->pph_base_amount;
+
+            // 3) Remove (uncheck) lines from invoice if needed
+            if (is_array($request->inv_line_remove)) {
+                foreach ($request->inv_line_remove as $lineId) {
+                    InvLine::where('inv_line_id', $lineId)->update([
+                        'inv_supplier_no' => null,
+                    ]);
+                }
+            }
+
+            // 4) Recalculate pph_amount
+            $pphAmount = $pphBase + ($pphBase * $pphRate);
+
+            // 5) Use the existing “tax_amount” column as “ppn_amount”
+            $ppnAmount = $invHeader->tax_amount; // (Set during the 'store' step)
+
+            // 6) total_amount = “ppn_amount minus pph_amount”
+            $totalAmount = $ppnAmount - $pphAmount;
+
+            // 7) Update the InvHeader record
+            $invHeader->update([
+                'pph_id'          => $request->pph_id,
+                'pph_description' => $pphDescription,
+                'pph_base_amount' => $pphBase,
+                'pph_amount'      => $pphAmount,
+                'total_amount'    => $totalAmount, // Now “ppn_amount - pph_amount”
+                'status'          => $request->status,
+                'reason'          => $request->reason,
+                'updated_by'      => Auth::user()->name,
+            ]);
+
+            return $invHeader;
+        });
+
+        // 8) Respond based on status
+        switch ($request->status) {
+            case 'Ready To Pay':
+                return response()->json([
+                    'message' => "Invoice {$inv_no} Is Ready To Pay"
+                ]);
+            case 'Rejected':
+                return response()->json([
+                    'message' => "Invoice {$inv_no} Rejected"
+                ]);
+            default:
+                return response()->json([
+                    'message' => "Invoice {$inv_no} updated"
+                ]);
+        }
+    }
 }

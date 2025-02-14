@@ -6,14 +6,14 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 
-class SupplierInvHeaderStoreRequest extends FormRequest
+class SuperAdminInvHeaderStoreRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return Auth::user()->role == 3;
+        return Auth::user()->role == 1;
     }
 
     /**

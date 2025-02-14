@@ -3,17 +3,18 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Support\Facades\Auth;
 
-class FinanceInvHeaderUpdateRequest extends FormRequest
+class SuperAdminInvHeaderUpdateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return Auth::user()->role == 2;
+        // Only allow access if user role == 1 (Admin/SuperAdmin)
+        return Auth::user()->role == 1;
     }
 
     /**
