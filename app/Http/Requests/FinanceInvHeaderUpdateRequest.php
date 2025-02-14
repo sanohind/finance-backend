@@ -34,6 +34,26 @@ class FinanceInvHeaderUpdateRequest extends FormRequest
         ];
     }
 
+    public function messages(): array
+    {
+        return [
+            'pph_id.required'             => 'The pph_id field is required.',
+            'pph_id.exists'               => 'The selected pph_id doesn’t exist.',
+            'pph_base_amount.required'    => 'The pph_base_amount field is required.',
+            'pph_base_amount.numeric'     => 'The pph_base_amount must be numeric.',
+            'inv_line_remove.array'       => 'The inv_line_remove must be an array.',
+            'inv_line_remove.*.exists'    => 'One or more inv_line IDs do not exist in the database.',
+            'status.required'             => 'The status field is required.',
+            'status.string'               => 'The status must be a string.',
+            'status.max'                  => 'The status may not be greater than 50 characters.',
+            'status.in'                   => 'The status must be either Ready To Payment or Rejected.',
+            'reason.string'               => 'The reason must be a string.',
+            'reason.max'                  => 'The reason may not be greater than 255 characters.',
+            'updated_by.string'           => 'The updated_by field must be a string.',
+            'updated_by.max'              => 'The updated_by may not be greater than 100 characters.',
+        ];
+    }
+
     protected function failedValidation($validator)
     {
         throw new HttpResponseException(
