@@ -10,6 +10,7 @@ use App\Http\Requests\FinanceInvHeaderUpdateRequest;
 use App\Http\Resources\InvHeaderResource;
 use App\Models\InvPph;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class FinanceInvHeaderController extends Controller
 {
@@ -27,48 +28,51 @@ class FinanceInvHeaderController extends Controller
 
     public function update(FinanceInvHeaderUpdateRequest $request, $inv_no)
     {
-        $request->validated();
+        $invHeader = DB::transaction(function () use ($request, $inv_no) {
+            $request->validated();
 
-        $invHeader = InvHeader::findOrFail($inv_no);
+            $invHeader = InvHeader::findOrFail($inv_no);
 
-        // 1) Fetch chosen PPH record
-        $pph = InvPph::find($request->pph_id);
-        $pphRate        = $pph ? $pph->pph_rate : 0.0;
-        $pphDescription = $pph ? $pph->pph_description : '';
+            // 1) Fetch chosen PPH record
+            $pph = InvPph::find($request->pph_id);
+            $pphRate        = $pph ? $pph->pph_rate : 0.0;
+            $pphDescription = $pph ? $pph->pph_description : '';
 
-        // 2) Manually entered pph_base_amount
-        $pphBase = $request->pph_base_amount;
+            // 2) Manually entered pph_base_amount
+            $pphBase = $request->pph_base_amount;
 
-        // 3) Remove (uncheck) lines from invoice if needed
-        if (is_array(value: $request->inv_line_remove)) {
-            foreach ($request->inv_line_remove as $lineId) {
-                InvLine::where('inv_line_id', $lineId)->update([
-                    'inv_supplier_no' => null,
-                ]);
+            // 3) Remove (uncheck) lines from invoice if needed
+            if (is_array($request->inv_line_remove)) {
+                foreach ($request->inv_line_remove as $lineId) {
+                    InvLine::where('inv_line_id', $lineId)->update([
+                        'inv_supplier_no' => null,
+                    ]);
+                }
             }
-        }
 
-        // 4) Recalculate pph_amount
-        $pphAmount = $pphBase + ($pphBase * $pphRate);
+            // 4) Recalculate pph_amount
+            $pphAmount = $pphBase + ($pphBase * $pphRate);
 
-        // 5) Use the existing “tax_amount” column as “ppn_amount”
-        $ppnAmount = $invHeader->tax_amount; // (Set during the 'store' step)
+            // 5) Use the existing “tax_amount” column as “ppn_amount”
+            $ppnAmount = $invHeader->tax_amount; // (Set during the 'store' step)
 
-        // 6) total_amount = “ppn_amount minus pph_amount”
-        $totalAmount = $ppnAmount - $pphAmount;
+            // 6) total_amount = “ppn_amount minus pph_amount”
+            $totalAmount = $ppnAmount - $pphAmount;
 
-        // 7) Update the InvHeader record
-        $invHeader->update([
-            'pph_id'          => $request->pph_id,
-            'pph_description' => $pphDescription,
-            'pph_base_amount' => $pphBase,
-            'pph_amount'      => $pphAmount,
+            // 7) Update the InvHeader record
+            $invHeader->update([
+                'pph_id'          => $request->pph_id,
+                'pph_description' => $pphDescription,
+                'pph_base_amount' => $pphBase,
+                'pph_amount'      => $pphAmount,
+                'total_amount'    => $totalAmount, // Now “ppn_amount - pph_amount”
+                'status'          => $request->status,
+                'reason'          => $request->reason,
+                'updated_by'      => Auth::user()->name,
+            ]);
 
-            'total_amount'    => $totalAmount, // Now “ppn_amount - pph_amount”
-            'status'          => $request->status,
-            'reason'          => $request->reason,
-            'updated_by'      => Auth::user()->name,
-        ]);
+            return $invHeader;
+        });
 
         // 8) Respond based on status
         switch ($request->status) {
