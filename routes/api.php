@@ -51,6 +51,8 @@ Route::middleware(['auth:sanctum', 'userRole:1'])->prefix('super-admin')->group(
 
     // Document streaming
     Route::get('files/{folder}/{filename}', [SuperAdminInvDocumentController::class, 'streamFile']);
+
+    Route::post('logout', [AuthController::class, 'logout']);
 });
 
 // Finance routes
@@ -69,6 +71,8 @@ Route::middleware(['auth:sanctum', 'userRole:2'])->prefix('finance')->group(func
 
     // Document streaming
     Route::get('files/{folder}/{filename}', [FinanceInvDocumentController::class, 'streamFile']);
+
+    Route::post('logout', [AuthController::class, 'logout']);
 });
 
 // Supplier routes
@@ -83,4 +87,6 @@ Route::middleware(['auth:sanctum', 'userRole:3'])->prefix('supplier-finance')->g
     // Invoice lines
     Route::get('inv-line', [SupplierInvLineController::class, 'getInvLineTransaction']);
     Route::get('inv-line/{inv_no}', [SupplierInvLineController::class, 'getInvLine']);
+
+    Route::post('logout', [AuthController::class, 'logout']);
 });

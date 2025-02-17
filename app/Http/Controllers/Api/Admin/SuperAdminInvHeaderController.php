@@ -29,6 +29,41 @@ class SuperAdminInvHeaderController extends Controller
         return InvHeaderResource::collection($invHeaders);
     }
 
+    public function printInvoice($inv_no)
+    {
+        $invHeader = InvHeader::with('invLines')->findOrFail($inv_no);
+
+        // Fetch the chosen PPN record
+        $ppn = InvPpn::find($invHeader->ppn_id);
+        $ppnRate = $ppn ? $ppn->ppn_rate : 0.0;
+
+        // Calculate additional amounts
+        $tax_base_amount = $invHeader->tax_base_amount;
+        $ppn_amount = $tax_base_amount * $ppnRate;
+        $tax_amount = $invHeader->tax_amount;
+
+        // Fetch bp_name from the first InvLine (assuming all lines have the same bp_name)
+        $bp_name = $invHeader->invLines->first()->bp_name;
+
+        // Prepare data for printing
+        $data = [
+            'bp_name'         => $bp_name,
+            'inv_no'          => $invHeader->inv_no,
+            'inv_date'        => $invHeader->inv_date,
+            'tax_base_amount' => $tax_base_amount,
+            'ppn_amount'      => $ppn_amount,
+            'tax_amount'      => $tax_amount,
+        ];
+
+        // Return the data as a JSON response for now
+        // You can replace this with actual printing logic later
+        return response()->json([
+            'success' => true,
+            'message' => 'Invoice data retrieved successfully',
+            'data'    => $data,
+        ]);
+    }
+
     public function store(SuperAdminInvHeaderStoreRequest $request)
     {
         $invHeader = DB::transaction(function () use ($request) {
@@ -155,6 +190,15 @@ class SuperAdminInvHeaderController extends Controller
                 'reason'          => $request->reason,
                 'updated_by'      => Auth::user()->name,
             ]);
+
+            // If status is Rejected, remove inv_supplier_no from inv_line
+            if ($request->status === 'Rejected') {
+                foreach ($invHeader->invLines as $line) {
+                    $line->update([
+                        'inv_supplier_no' => null,
+                    ]);
+                }
+            }
 
             return $invHeader;
         });

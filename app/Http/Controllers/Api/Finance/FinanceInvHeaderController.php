@@ -71,12 +71,21 @@ class FinanceInvHeaderController extends Controller
                 'updated_by'      => Auth::user()->name,
             ]);
 
+            // If status is Rejected, remove inv_supplier_no from inv_line
+            if ($request->status === 'Rejected') {
+                foreach ($invHeader->invLines as $line) {
+                    $line->update([
+                        'inv_supplier_no' => null,
+                    ]);
+                }
+            }
+
             return $invHeader;
         });
 
         // 8) Respond based on status
         switch ($request->status) {
-            case 'Ready To Pay':
+            case 'Ready To Payment':
                 return response()->json([
                     'message' => "Invoice {$inv_no} Is Ready To Pay"
                 ]);
