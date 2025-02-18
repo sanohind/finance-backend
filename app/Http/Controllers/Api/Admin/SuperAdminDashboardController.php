@@ -36,4 +36,61 @@ class SuperAdminDashboardController extends Controller
             'data' => $data,
         ]);
     }
+
+    public function detailActiveUser()
+    {
+        // Calculate the timestamp for one hour ago
+        $oneHourAgo = now()->subHour();
+
+        // Get the active tokens created within the last hour
+        $active_tokens = PersonalAccessToken::where('created_at', '>=', $oneHourAgo)
+            ->with('tokenable') // Ensure we load the related user
+            ->whereNull('expires_at')
+            ->get();
+
+        // Map the active tokens to the required details
+        $active_token_details = $active_tokens->map(function ($token) {
+            return [
+                'username' => $token->tokenable->username,
+                'name' => $token->tokenable->name,
+                'role' => $token->tokenable->role,
+                'last_login' => $token->created_at->format('d/m/Y - H:i:s'),
+                'last_update' => $token->last_used_at ? $token->last_used_at->format('d/m/Y - H:i:s') : null,
+                'id' => $token->id,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Active Token Details Retrieved Successfully',
+            'data' => $active_token_details,
+        ]);
+    }
+
+    public function logoutByTokenId(Request $request)
+    {
+        // Validate the request to ensure 'token_id' is provided
+        $request->validate([
+            'token_id' => 'required|integer',
+        ]);
+
+        // Find the token by ID
+        $token = PersonalAccessToken::find($request->token_id);
+
+        if (! $token) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Token not found',
+            ], 404);
+        }
+
+        // Revoke the specific token
+        $token->delete();
+
+        // Logout success response
+        return response()->json([
+            'success' => true,
+            'message' => 'Token successfully revoked',
+        ], 200);
+    }
 }
