@@ -9,6 +9,7 @@ use App\Models\Local\Partner;
 use App\Http\Requests\UserStoreRequest;
 use App\Http\Requests\UserUpdateRequest;
 use App\Http\Resources\UserResource;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -35,7 +36,7 @@ class UserController extends Controller
             'role' => $request->role,
             'status' => $request->status,
             'username' => $request->username,
-            'password' => $request->password,
+            'password' => Hash::make($request->password),
             'email' => $request->email,
         ]);
 
