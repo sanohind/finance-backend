@@ -30,7 +30,7 @@ class UserStoreRequest extends FormRequest
             'status' => 'required|string|max:25',
             'username' => 'required|string|unique:user,username|max:25', // username must unique
             'password' => 'required|string|min:8|max:25', //min and max length 8/25
-            'email.*' => 'email|max:255',
+            'email' => 'required|string|max:255',
         ];
     }
 
