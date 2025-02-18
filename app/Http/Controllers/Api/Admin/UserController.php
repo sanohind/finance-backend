@@ -30,7 +30,7 @@ class UserController extends Controller
         $request->validated();
 
         User::create([
-            'bp_code' => $request->supplier_code,
+            'bp_code' => $request->bp_code,
             'name' => $request->name,
             'role' => $request->role,
             'status' => $request->status,
@@ -57,7 +57,7 @@ class UserController extends Controller
         $user = User::where('user_id', $id)->first();
 
         $user->update([
-            'bp_code' => $request->supplier_code ?? $user->bp_code,
+            'bp_code' => $request->bp_code ?? $user->bp_code,
             'name' => $request->name ?? $user->name,
             'role' => $request->role ?? $user->role,
             'username' => $request->username ?? $user->username,
