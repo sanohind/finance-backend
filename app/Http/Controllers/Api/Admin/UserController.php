@@ -77,9 +77,19 @@ class UserController extends Controller
     // Update status (0 inactive, 1 active)
     public function updateStatus($id, $status)
     {
-        $user = User::findOrFail($id);
-        $user->status = $status;
-        $user->save();
+        $user = User::where('user_id', $id)->first();
+        if (!$user) {
+            return response()->json(['message' => 'User not found']);
+        }
+
+        if ($user -> status == 1) {
+            $user->status = 0;
+            $user->save();
+        }else if ($user -> status == 0) {
+            $user->status = 1;
+            $user->save();
+        }
+
         return new UserResource($user);
     }
 }
