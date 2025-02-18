@@ -26,6 +26,8 @@ Route::get('local2/sync-inv-line', [LocalDataController::class, 'syncInvLine'])-
 Route::middleware(['auth:sanctum', 'userRole:1'])->prefix('super-admin')->group(function () {
     // Dashboard
     Route::get('dashboard', [SuperAdminDashboardController::class, 'dashboard']);
+    Route::get('active-user', [SuperAdminDashboardController::class, 'detailActiveUser']);
+    Route::get('logout-user', [SuperAdminDashboardController::class, 'logoutByTokenId']);
 
     // Route for sync data from second database
     Route::get('sync-inv-line', [LocalDataController::class, 'syncInvLine']);
