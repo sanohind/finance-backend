@@ -75,7 +75,7 @@ class UserController extends Controller
     }
 
     // Update status (0 inactive, 1 active)
-    public function updateStatus($id, $status)
+    public function updateStatus($id)
     {
         $user = User::where('user_id', $id)->first();
         if (!$user) {
