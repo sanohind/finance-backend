@@ -39,7 +39,7 @@ Route::middleware(['auth:sanctum', 'userRole:1'])->prefix('super-admin')->group(
     Route::get('edit/{id}', [UserController::class, 'edit']);
     Route::put('update/{id}', [UserController::class, 'update']);
     Route::delete('delete/{id}', [UserController::class, 'destroy']);
-    Route::patch('status/{id}/{status}', [UserController::class, 'updateStatus']);
+    Route::patch('status/{id}', [UserController::class, 'updateStatus']);
 
     // Invoice management
     Route::get('inv-header', [SuperAdminInvHeaderController::class, 'getInvHeader']);
