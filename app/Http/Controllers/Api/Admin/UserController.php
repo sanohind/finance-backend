@@ -54,13 +54,15 @@ class UserController extends Controller
     {
         $request->validated();
 
-        User::where('user_id', $id)->update([
-            'bp_code' => $request->supplier_code,
-            'name' => $request->name,
-            'role' => $request->role,
-            'username' => $request->username,
-            'password' => $request->password,
-            'email' => $request->email,
+        $user = User::where('user_id', $id)->first();
+
+        $user->update([
+            'bp_code' => $request->supplier_code ?? $user->bp_code,
+            'name' => $request->name ?? $user->name,
+            'role' => $request->role ?? $user->role,
+            'username' => $request->username ?? $user->username,
+            'password' => $request->password ?? $user->password,
+            'email' => $request->email ?? $user->email,
         ]);
 
         return response()->json(['message' => 'User updated']);
