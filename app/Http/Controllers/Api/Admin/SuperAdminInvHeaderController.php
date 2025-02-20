@@ -29,6 +29,18 @@ class SuperAdminInvHeaderController extends Controller
         return InvHeaderResource::collection($invHeaders);
     }
 
+    public function getPpn()
+    {
+        $ppn = InvPpn::select('ppn_id', 'ppn_description')->get();
+        return response()->json($ppn);
+    }
+
+    public function getPph()
+    {
+        $pph = InvPph::select('pph_id', 'pph_description')->get();
+        return response()->json($pph);
+    }
+
     public function printInvoice($inv_no)
     {
         $invHeader = InvHeader::with('invLines')->findOrFail($inv_no);
@@ -227,5 +239,19 @@ class SuperAdminInvHeaderController extends Controller
                     'message' => "Invoice {$inv_no} updated"
                 ]);
         }
+    }
+
+    public function updateStatusToInProcess($inv_no)
+    {
+        $invHeader = InvHeader::where('inv_no', $inv_no)->where('status', 'New')->firstOrFail();
+
+        $invHeader->update([
+            'status' => 'In Process',
+            'updated_by' => Auth::user()->name,
+        ]);
+
+        return response()->json([
+            'message' => "Invoice {$inv_no} status updated to In Process"
+        ]);
     }
 }

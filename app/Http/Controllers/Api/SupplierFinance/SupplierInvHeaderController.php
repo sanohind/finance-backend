@@ -12,6 +12,7 @@ use App\Models\InvHeader;
 use App\Models\InvDocument;
 use App\Models\InvLine;
 use App\Models\InvPpn;
+use App\Models\InvPph;
 
 class SupplierInvHeaderController extends Controller
 {
@@ -23,6 +24,18 @@ class SupplierInvHeaderController extends Controller
         $invHeaders = InvHeader::where('bp_code', $sp_code)->get();
 
         return InvHeaderResource::collection($invHeaders);
+    }
+
+    public function getPpn()
+    {
+        $ppn = InvPpn::select('ppn_id', 'ppn_description')->get();
+        return response()->json($ppn);
+    }
+
+    public function getPph()
+    {
+        $pph = InvPph::select('pph_id', 'pph_description')->get();
+        return response()->json($pph);
     }
 
     public function store(SupplierInvHeaderStoreRequest $request)
