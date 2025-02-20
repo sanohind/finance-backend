@@ -26,14 +26,12 @@ return new class extends Migration
             // Relation PPN
             $table->unsignedBigInteger('ppn_id')->nullable();
             $table->foreign('ppn_id')->references('ppn_id')->on('inv_ppn');
-            $table->string('tax_description')->nullable();
             $table->integer('tax_base_amount')->nullable();
             $table->integer('tax_amount')->nullable();
 
             // Relation PPH
             $table->unsignedBigInteger('pph_id')->nullable();
             $table->foreign('pph_id')->references('pph_id')->on('inv_pph');
-            $table->string('pph_description')->nullable();
             $table->integer('pph_base_amount')->nullable();
             $table->integer('pph_amount')->nullable();
 
