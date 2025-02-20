@@ -80,8 +80,13 @@ class SuperAdminInvHeaderController extends Controller
 
             // Fetch the chosen PPN record
             $ppn = InvPpn::find($request->ppn_id);
-            $ppnRate         = $ppn ? $ppn->ppn_rate : 0.0;
-            $ppnDescription  = $ppn ? $ppn->ppn_description : '';
+            $ppnRate         =  $ppn->ppn_rate;
+
+            if ($ppnRate === null) {
+                return response()->json([
+                    'message' => 'PPN Rate not found',
+                ], 404);
+            }
 
             // Calculate amounts
             $tax_base_amount = $total_dpp;
@@ -97,7 +102,7 @@ class SuperAdminInvHeaderController extends Controller
                 'inv_supplier'    => $request->inv_supplier,
                 'total_dpp'       => $total_dpp,
                 'ppn_id'          => $request->ppn_id,
-                'tax_description' => $ppnDescription,
+                'pph_id'          => $request->pph_id,
                 'tax_base_amount' => $tax_base_amount,
                 'tax_amount'      => $tax_amount,
                 'total_amount'    => $total_amount,
@@ -155,8 +160,13 @@ class SuperAdminInvHeaderController extends Controller
 
             // 1) Fetch chosen PPH record
             $pph = InvPph::find($request->pph_id);
-            $pphRate        = $pph ? $pph->pph_rate : 0.0;
-            $pphDescription = $pph ? $pph->pph_description : '';
+            $pphRate        = $pph->pph_rate;
+
+            if ($pphRate === null) {
+                return response()->json([
+                    'message' => 'PPH Rate not found',
+                ], 404);
+            }
 
             // 2) Manually entered pph_base_amount
             $pphBase = $request->pph_base_amount;
@@ -182,7 +192,6 @@ class SuperAdminInvHeaderController extends Controller
             // 7) Update the InvHeader record
             $invHeader->update([
                 'pph_id'          => $request->pph_id,
-                'pph_description' => $pphDescription,
                 'pph_base_amount' => $pphBase,
                 'pph_amount'      => $pphAmount,
                 'total_amount'    => $totalAmount, // Now “ppn_amount - pph_amount”

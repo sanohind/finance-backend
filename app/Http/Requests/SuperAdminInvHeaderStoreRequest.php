@@ -32,6 +32,7 @@ class SuperAdminInvHeaderStoreRequest extends FormRequest
             'reason'       => 'nullable|string',
             'created_by'    => 'nullable|string',
             'ppn_id'       => 'required|exists:inv_ppn,ppn_id',
+            'pph_id'       => 'required|exists:inv_pph,pph_id',
             'invoice_file' => 'nullable|file|mimes:pdf|max:5000',
             'fakturpajak_file' => 'nullable|file|mimes:pdf|max:5000',
             'suratjalan_file' => 'nullable|file|mimes:pdf|max:5000',

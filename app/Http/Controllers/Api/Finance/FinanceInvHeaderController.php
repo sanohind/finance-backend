@@ -35,8 +35,12 @@ class FinanceInvHeaderController extends Controller
 
             // 1) Fetch chosen PPH record
             $pph = InvPph::find($request->pph_id);
-            $pphRate        = $pph ? $pph->pph_rate : 0.0;
-            $pphDescription = $pph ? $pph->pph_description : '';
+            $pphRate = $pph ? $pph->pph_rate : null;
+            if ($pphRate === null) {
+                return response()->json([
+                    'message' => 'PPH Rate not found',
+                ], 404);
+            }
 
             // 2) Manually entered pph_base_amount
             $pphBase = $request->pph_base_amount;
@@ -62,7 +66,6 @@ class FinanceInvHeaderController extends Controller
             // 7) Update the InvHeader record
             $invHeader->update([
                 'pph_id'          => $request->pph_id,
-                'pph_description' => $pphDescription,
                 'pph_base_amount' => $pphBase,
                 'pph_amount'      => $pphAmount,
                 'total_amount'    => $totalAmount, // Now “ppn_amount - pph_amount”

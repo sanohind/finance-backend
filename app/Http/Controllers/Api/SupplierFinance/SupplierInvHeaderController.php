@@ -41,13 +41,18 @@ class SupplierInvHeaderController extends Controller
 
             // Fetch the chosen PPN record
             $ppn = InvPpn::find($request->ppn_id);
-            $ppnRate         = $ppn ? $ppn->ppn_rate : 0.0;
-            $ppnDescription  = $ppn ? $ppn->ppn_description : '';
+            $ppnRate = $ppn ? $ppn->ppn_rate : null;
+            if ($ppnRate === null) {
+                return response()->json([
+                    'message' => 'PPN Rate not found',
+                ], 404);
+            }
 
             $tax_base_amount = $total_dpp;
             $tax_amount      = $tax_base_amount + ($tax_base_amount * $ppnRate);
             $total_amount    = $tax_amount;
 
+            // Create the InvHeader record (note the inclusion of pph_id similar to SuperAdmin)
             $invHeader = InvHeader::create([
                 'inv_no'          => $request->inv_no,
                 'bp_code'         => $sp_code,
@@ -56,7 +61,7 @@ class SupplierInvHeaderController extends Controller
                 'inv_supplier'    => $request->inv_supplier,
                 'total_dpp'       => $total_dpp,
                 'ppn_id'          => $request->ppn_id,
-                'tax_description' => $ppnDescription,
+                'pph_id'          => $request->pph_id, // Added to mirror the SuperAdmin logic
                 'tax_base_amount' => $tax_base_amount,
                 'tax_amount'      => $tax_amount,
                 'total_amount'    => $total_amount,
