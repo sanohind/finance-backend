@@ -46,6 +46,9 @@ Route::middleware(['auth:sanctum', 'userRole:1'])->prefix('super-admin')->group(
     Route::get('inv-header/bp-code/{bp_code}', [SuperAdminInvHeaderController::class, 'getInvHeaderByBpCode']);
     Route::post('inv-header/store', [SuperAdminInvHeaderController::class, 'store']);
     Route::put('inv-header/{inv_no}', [SuperAdminInvHeaderController::class, 'update']);
+    Route::put('inv-header/{inv_no}/in-process', [SuperAdminInvHeaderController::class, 'updateStatusToInProcess']);
+    Route::get('pph', [SuperAdminInvHeaderController::class, 'getPph']);
+    Route::get('ppn', [SuperAdminInvHeaderController::class, 'getPpn']);
 
     // Invoice lines
     Route::get('inv-line', [SuperAdminInvLineController::class, 'getAllInvLine']);
@@ -85,6 +88,8 @@ Route::middleware(['auth:sanctum', 'userRole:3'])->prefix('supplier-finance')->g
     // Invoice management
     Route::get('inv-header', [SupplierInvHeaderController::class, 'getInvHeader']);
     Route::post('inv-header/store', [SupplierInvHeaderController::class, 'store']);
+    Route::get('pph', [SupplierInvHeaderController::class, 'getPph']);
+    Route::get('ppn', [SupplierInvHeaderController::class, 'getPpn']);
 
     // Invoice lines
     Route::get('inv-line', [SupplierInvLineController::class, 'getInvLineTransaction']);
