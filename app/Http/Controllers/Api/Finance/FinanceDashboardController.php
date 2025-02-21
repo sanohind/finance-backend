@@ -18,7 +18,7 @@ class FinanceDashboardController extends Controller
         $data['in_process_invoices'] = InvHeader::where('status', 'In Process')->count();
         $data['rejected_invoices'] = InvHeader::where('status', 'Rejected')->count();
         $data['ready_to_payment_invoices'] = InvHeader::where('status', 'Ready To Payment')->count();
-        $data['done_invoices'] = InvHeader::where('status', 'Done')->count();
+        $data['paid_invoices'] = InvHeader::where('status', 'Paid')->count();
 
         return response()->json([
             'success' => true,
