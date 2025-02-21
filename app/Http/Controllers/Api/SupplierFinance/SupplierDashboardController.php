@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\InvHeader;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Local\Partner;
 
 class SupplierDashboardController extends Controller
 {
@@ -30,5 +31,14 @@ class SupplierDashboardController extends Controller
             'message' => 'Dashboard Data Retrieved Successfully',
             'data' => $data,
         ]);
+    }
+
+    public function getBusinessPartner()
+    {
+        $user = Auth::user();
+        $partner = Partner::where('bp_code', $user->bp_code)
+                          ->select('bp_code', 'bp_name', 'adr_line_1')
+                          ->first();
+        return response()->json($partner);
     }
 }
