@@ -65,13 +65,20 @@ Route::middleware(['auth:sanctum', 'userRole:2'])->prefix('finance')->group(func
     // Dashboard
     Route::get('dashboard', [FinanceDashboardController::class, 'dashboard']);
 
+    // Business Partners
+    Route::get('business-partners', [UserController::class, 'getBusinessPartner']);
+
     // Invoice management
     Route::get('inv-header', [FinanceInvHeaderController::class, 'getInvHeader']);
     Route::get('inv-header/bp-code/{bp_code}', [FinanceInvHeaderController::class, 'getInvHeaderByBpCode']);
     Route::put('inv-header/{inv_no}', [FinanceInvHeaderController::class, 'update']);
     Route::put('inv-header/{inv_no}/in-process', [FinanceInvHeaderController::class, 'updateStatusToInProcess']);
 
+    // PPh
+    Route::get('pph', [FinanceInvHeaderController::class, 'getPph']);
+
     // Invoice lines
+    Route::get('inv-line', [FinanceInvLineController::class, 'getInvLineTransaction']);
     Route::get('inv-line/{inv_no}', [FinanceInvLineController::class, 'getInvLine']);
 
     // Document streaming

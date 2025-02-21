@@ -14,4 +14,10 @@ class FinanceInvLineController extends Controller
         $invLines = InvLine::where('inv_supplier_no', $inv_no)->get();
         return InvLineResource::collection($invLines);
     }
+
+    public function getInvLineTransaction()
+    {
+        $invLines = InvLine::all();
+        return InvLineResource::collection($invLines);
+    }
 }
