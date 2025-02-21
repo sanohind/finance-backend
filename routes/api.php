@@ -92,6 +92,9 @@ Route::middleware(['auth:sanctum', 'userRole:3'])->prefix('supplier-finance')->g
     // Dashboard
     Route::get('dashboard', [SupplierDashboardController::class, 'dashboard']);
 
+    // Business Partners
+    Route::get('business-partners', [SupplierDashboardController::class, 'getBusinessPartner']);
+
     // Invoice management
     Route::get('inv-header', [SupplierInvHeaderController::class, 'getInvHeader']);
     Route::post('inv-header/store', [SupplierInvHeaderController::class, 'store']);
