@@ -26,6 +26,12 @@ class FinanceInvHeaderController extends Controller
         return InvHeaderResource::collection($invHeaders);
     }
 
+    public function getPph()
+    {
+        $pph = InvPph::select('pph_id', 'pph_description')->get();
+        return response()->json($pph);
+    }
+
     public function update(FinanceInvHeaderUpdateRequest $request, $inv_no)
     {
         $invHeader = DB::transaction(function () use ($request, $inv_no) {
