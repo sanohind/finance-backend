@@ -30,7 +30,7 @@ class SuperAdminInvHeaderUpdateRequest extends FormRequest
             'inv_line_remove'       => 'nullable|array',
             'inv_line_remove.*'     => 'exists:inv_line,inv_line_id',
             'status'           => 'required|string|max:50|in:Ready To Payment,Rejected',
-            'reason'           => 'nullable|string|max:255',
+            'reason'           => 'required_if:status,Rejected',
             'updated_by'       => 'nullable|string|max:100',
         ];
     }
