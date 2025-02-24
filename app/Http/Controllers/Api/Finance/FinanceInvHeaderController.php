@@ -34,6 +34,13 @@ class FinanceInvHeaderController extends Controller
 
     public function update(FinanceInvHeaderUpdateRequest $request, $inv_no)
     {
+        // Check if status is Rejected but no reason provided
+        if ($request->status === 'Rejected' && empty($request->reason)) {
+            return response()->json([
+                'message' => 'Reason is required when rejecting an invoice'
+            ], 422);
+        }
+
         $invHeader = DB::transaction(function () use ($request, $inv_no) {
             $request->validated();
 
@@ -42,6 +49,7 @@ class FinanceInvHeaderController extends Controller
             // 1) Fetch chosen PPH record
             $pph = InvPph::find($request->pph_id);
             $pphRate = $pph ? $pph->pph_rate : null;
+
             if ($pphRate === null) {
                 return response()->json([
                     'message' => 'PPH Rate not found',
@@ -63,10 +71,10 @@ class FinanceInvHeaderController extends Controller
             // 4) Recalculate pph_amount
             $pphAmount = $pphBase + ($pphBase * $pphRate);
 
-            // 5) Use the existing “tax_amount” column as “ppn_amount”
+            // 5) Use the existing "tax_amount" column as "ppn_amount"
             $ppnAmount = $invHeader->tax_amount; // (Set during the 'store' step)
 
-            // 6) total_amount = “ppn_amount minus pph_amount”
+            // 6) total_amount = "ppn_amount minus pph_amount"
             $totalAmount = $ppnAmount - $pphAmount;
 
             // 7) Update the InvHeader record
@@ -74,7 +82,7 @@ class FinanceInvHeaderController extends Controller
                 'pph_id'          => $request->pph_id,
                 'pph_base_amount' => $pphBase,
                 'pph_amount'      => $pphAmount,
-                'total_amount'    => $totalAmount, // Now “ppn_amount - pph_amount”
+                'total_amount'    => $totalAmount,
                 'status'          => $request->status,
                 'reason'          => $request->reason,
                 'updated_by'      => Auth::user()->name,
@@ -82,6 +90,9 @@ class FinanceInvHeaderController extends Controller
 
             // If status is Rejected, remove inv_supplier_no from inv_line
             if ($request->status === 'Rejected') {
+                if (empty($request->reason)) {
+                    throw new \Exception('Reason is required when rejecting an invoice');
+                }
                 foreach ($invHeader->invLines as $line) {
                     $line->update([
                         'inv_supplier_no' => null,
@@ -100,7 +111,7 @@ class FinanceInvHeaderController extends Controller
                 ]);
             case 'Rejected':
                 return response()->json([
-                    'message' => "Invoice {$inv_no} Rejected"
+                    'message' => "Invoice {$inv_no} Rejected: {$request->reason}"
                 ]);
             default:
                 return response()->json([

@@ -41,41 +41,6 @@ class SuperAdminInvHeaderController extends Controller
         return response()->json($pph);
     }
 
-    public function printInvoice($inv_no)
-    {
-        $invHeader = InvHeader::with('invLines')->findOrFail($inv_no);
-
-        // Fetch the chosen PPN record
-        $ppn = InvPpn::find($invHeader->ppn_id);
-        $ppnRate = $ppn ? $ppn->ppn_rate : 0.0;
-
-        // Calculate additional amounts
-        $tax_base_amount = $invHeader->tax_base_amount;
-        $ppn_amount = $tax_base_amount * $ppnRate;
-        $tax_amount = $invHeader->tax_amount;
-
-        // Fetch bp_name from the first InvLine (assuming all lines have the same bp_name)
-        $bp_name = $invHeader->invLines->first()->bp_name;
-
-        // Prepare data for printing
-        $data = [
-            'bp_name'         => $bp_name,
-            'inv_no'          => $invHeader->inv_no,
-            'inv_date'        => $invHeader->inv_date,
-            'tax_base_amount' => $tax_base_amount,
-            'ppn_amount'      => $ppn_amount,
-            'tax_amount'      => $tax_amount,
-        ];
-
-        // Return the data as a JSON response for now
-        // You can replace this with actual printing logic later
-        return response()->json([
-            'success' => true,
-            'message' => 'Invoice data retrieved successfully',
-            'data'    => $data,
-        ]);
-    }
-
     public function store(SuperAdminInvHeaderStoreRequest $request)
     {
         $invHeader = DB::transaction(function () use ($request) {
@@ -165,6 +130,13 @@ class SuperAdminInvHeaderController extends Controller
 
     public function update(SuperAdminInvHeaderUpdateRequest $request, $inv_no)
     {
+        // Check if status is Rejected but no reason provided
+        if ($request->status === 'Rejected' && empty($request->reason)) {
+            return response()->json([
+                'message' => 'Reason is required when rejecting an invoice'
+            ], 422);
+        }
+
         $invHeader = DB::transaction(function () use ($request, $inv_no) {
             $request->validated();
 
@@ -172,7 +144,7 @@ class SuperAdminInvHeaderController extends Controller
 
             // 1) Fetch chosen PPH record
             $pph = InvPph::find($request->pph_id);
-            $pphRate        = $pph->pph_rate;
+            $pphRate = $pph ? $pph->pph_rate : null;
 
             if ($pphRate === null) {
                 return response()->json([
@@ -195,10 +167,10 @@ class SuperAdminInvHeaderController extends Controller
             // 4) Recalculate pph_amount
             $pphAmount = $pphBase + ($pphBase * $pphRate);
 
-            // 5) Use the existing “tax_amount” column as “ppn_amount”
+            // 5) Use the existing "tax_amount" column as "ppn_amount"
             $ppnAmount = $invHeader->tax_amount; // (Set during the 'store' step)
 
-            // 6) total_amount = “ppn_amount minus pph_amount”
+            // 6) total_amount = "ppn_amount minus pph_amount"
             $totalAmount = $ppnAmount - $pphAmount;
 
             // 7) Update the InvHeader record
@@ -206,7 +178,7 @@ class SuperAdminInvHeaderController extends Controller
                 'pph_id'          => $request->pph_id,
                 'pph_base_amount' => $pphBase,
                 'pph_amount'      => $pphAmount,
-                'total_amount'    => $totalAmount, // Now “ppn_amount - pph_amount”
+                'total_amount'    => $totalAmount,
                 'status'          => $request->status,
                 'reason'          => $request->reason,
                 'updated_by'      => Auth::user()->name,
@@ -214,6 +186,9 @@ class SuperAdminInvHeaderController extends Controller
 
             // If status is Rejected, remove inv_supplier_no from inv_line
             if ($request->status === 'Rejected') {
+                if (empty($request->reason)) {
+                    throw new \Exception('Reason is required when rejecting an invoice');
+                }
                 foreach ($invHeader->invLines as $line) {
                     $line->update([
                         'inv_supplier_no' => null,
@@ -226,17 +201,17 @@ class SuperAdminInvHeaderController extends Controller
 
         // 8) Respond based on status
         switch ($request->status) {
-            case 'Ready To Pay':
+            case 'Ready To Payment':
                 return response()->json([
-                    'message' => "Invoice {$inv_no} Is Ready To Pay"
+                    'message' => "Invoice {$inv_no} Is Ready To Payment"
                 ]);
             case 'Rejected':
                 return response()->json([
-                    'message' => "Invoice {$inv_no} Rejected"
+                    'message' => "Invoice {$inv_no} Rejected: {$request->reason}"
                 ]);
             default:
                 return response()->json([
-                    'message' => "Invoice {$inv_no} updated"
+                    'message' => "Invoice {$inv_no} updated" // Ganti jadi null
                 ]);
         }
     }
