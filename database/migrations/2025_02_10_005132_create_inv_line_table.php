@@ -51,8 +51,8 @@ return new class extends Migration
             $table->integer('receipt_amount')->nullable();
             $table->integer('receipt_unit_price')->nullable();
 
-            $table->boolean('is_final_receipt')->default(false);
-            $table->boolean('is_confirmed')->default(false);
+            $table->string('is_final_receipt')->default(false);
+            $table->string('is_confirmed')->default(false);
 
             $table->string('inv_doc_no')->nullable();
             $table->date('inv_doc_date')->nullable();
