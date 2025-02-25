@@ -16,11 +16,14 @@ use App\Http\Controllers\Api\SupplierFinance\SupplierDashboardController;
 use App\Http\Controllers\Api\SupplierFinance\SupplierInvHeaderController;
 use App\Http\Controllers\Api\SupplierFinance\SupplierInvLineController;
 use App\Http\Controllers\Api\Local2\LocalDataController;
+use App\Http\Controllers\Api\Local2\InvoiceReceiptController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
 // Route for sync data from second database
 Route::get('local2/sync-inv-line', [LocalDataController::class, 'syncInvLine'])->middleware('auth:sanctum');
+
+Route::get('sync', [InvoiceReceiptController::class, 'copyInvLines']);
 
 // Admin routes
 Route::middleware(['auth:sanctum', 'userRole:1'])->prefix('super-admin')->group(function () {
