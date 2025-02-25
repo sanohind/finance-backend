@@ -48,16 +48,16 @@ return new class extends Migration
             $table->integer('approve_qty')->nullable();
             $table->string('unit')->nullable();
 
-            $table->decimal('receipt_amount', 16, 2)->nullable();
-            $table->decimal('receipt_unit_price', 16, 2)->nullable();
+            $table->integer('receipt_amount')->nullable();
+            $table->integer('receipt_unit_price')->nullable();
 
-            $table->boolean('is_final_receipt')->default(false);
-            $table->boolean('is_confirmed')->default(false);
+            $table->string('is_final_receipt')->default(false);
+            $table->string('is_confirmed')->default(false);
 
             $table->string('inv_doc_no')->nullable();
             $table->date('inv_doc_date')->nullable();
-            $table->decimal('inv_qty', 16, 2)->nullable();
-            $table->decimal('inv_amount', 16, 2)->nullable();
+            $table->integer('inv_qty')->nullable();
+            $table->integer('inv_amount')->nullable();
 
             $table->string('inv_supplier_no')->nullable();
             $table->date('inv_due_date')->nullable();
