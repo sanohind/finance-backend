@@ -24,9 +24,14 @@ class InvHeader extends Model
 
     protected $fillable = [
         'inv_no',
+        'receipt_number',
+        'receipt_path',
         'bp_code',
         'inv_date',
+        'plan_date',
+        'actual_date',
         'inv_faktur',
+        'inv_faktur_date',
         'inv_supplier',
         'total_dpp',
         'ppn_id',
