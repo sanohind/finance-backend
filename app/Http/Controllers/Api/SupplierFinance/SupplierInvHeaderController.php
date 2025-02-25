@@ -71,6 +71,7 @@ class SupplierInvHeaderController extends Controller
                 'bp_code'         => $sp_code,
                 'inv_date'        => $request->inv_date,
                 'inv_faktur'      => $request->inv_faktur,
+                'inv_faktur_date' => $request->inv_faktur_date,
                 'inv_supplier'    => $request->inv_supplier,
                 'total_dpp'       => $total_dpp,
                 'ppn_id'          => $request->ppn_id,

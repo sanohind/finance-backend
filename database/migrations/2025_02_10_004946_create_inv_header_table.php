@@ -13,13 +13,20 @@ return new class extends Migration
     {
         Schema::create('inv_header', function (Blueprint $table) {
             $table->string('inv_no', 255)->primary();
+            $table->string('receipt_number')->nullable();
+            $table->string('receipt_path')->nullable();
 
             // Foreign key to user
             $table->string('bp_code')->nullable();
             $table->foreign('bp_code')->references('bp_code')->on('user');
 
             $table->date('inv_date')->nullable();
+            $table->date('plan_date')->nullable();
+            $table->date('actual_date')->nullable();
+
             $table->string('inv_faktur')->nullable();
+            $table->string('inv_faktur_date')->nullable();
+
             $table->string('inv_supplier')->nullable();
             $table->integer('total_dpp')->nullable();
 
