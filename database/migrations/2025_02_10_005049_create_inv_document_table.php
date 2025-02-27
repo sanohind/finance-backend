@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('inv_no', 255)->nullable();
             $table->foreign('inv_no')->references('inv_no')->on('inv_header')->onDelete('cascade');
 
+            $table->string('type', 255)->nullable();
             $table->string('file', 255)->nullable();
             $table->timestamps();
         });

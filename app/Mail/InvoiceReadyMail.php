@@ -49,7 +49,10 @@ class InvoiceReadyMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'mail.sent-receipt-email.blade.php',
+            markdown: 'mail.sent-receipt-email',
+            with: [
+                'data'=> $this->data,
+            ],
         );
     }
 
@@ -62,7 +65,7 @@ class InvoiceReadyMail extends Mailable
     {
         return [
             Attachment::fromPath($this->data['filepath'])
-                ->as("RECEIPT_{$this->data['inv_no']}.pdf")
+                ->as("receipts/RECEIPT_{$this->data['inv_no']}.pdf")
                 ->withMime('application/pdf'),
         ];
     }

@@ -25,7 +25,7 @@ return new class extends Migration
             $table->date('actual_date')->nullable();
 
             $table->string('inv_faktur')->nullable();
-            $table->string('inv_faktur_date')->nullable();
+            $table->date('inv_faktur_date')->nullable();
 
             $table->string('inv_supplier')->nullable();
             $table->integer('total_dpp')->nullable();

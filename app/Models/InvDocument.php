@@ -20,6 +20,7 @@ class InvDocument extends Model
     protected $fillable = [
         'inv_no',
         'file',
+        'type',
     ];
 
     public function invHeader(): BelongsTo
