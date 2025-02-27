@@ -11,11 +11,12 @@ A new notification Invoice Receipt has been confirmed by PT Sanoh Indonesia. Ple
     <p>Invoice Number : {{ $data['inv_no'] }}</p>
     <p>Status : {{ $data['status'] }}</p>
     <p>Invoice Payment Date : {{ $data['plan_date'] }}</p>
+    <p>Invoice Total Amount : {{ $data['total_amount'] }}</p>
 </x-mail::panel>
 
-<x-mail::button :url="$url">
-View Invoice Receipt
-</x-mail::button>
+{{-- <x-mail::button> --}}
+{{-- <p>View Invoice Receipt</p> --}}
+{{-- </x-mail::button> --}}
 
 {{-- Footer --}}
 Thanks,<br>

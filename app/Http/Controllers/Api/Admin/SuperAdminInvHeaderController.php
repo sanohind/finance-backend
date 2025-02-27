@@ -57,7 +57,7 @@ class SuperAdminInvHeaderController extends Controller
             // Gather total DPP from selected inv lines
             foreach ($request->inv_line_detail as $line) {
                 $invLine = InvLine::find($line);
-                $total_dpp += $invLine->receipt_qty * $invLine->po_price;
+                $total_dpp = $invLine->receipt_amount;
             }
 
             // Fetch the chosen PPN record
@@ -90,34 +90,48 @@ class SuperAdminInvHeaderController extends Controller
                 'tax_amount'      => $tax_amount,
                 'total_amount'    => $total_amount,
                 'status'          => 'New',
-                'reason'          => $request->reason,
                 'created_by'      => Auth::user()->name,
             ]);
 
             // Handle file uploads
             $files = [];
             if ($request->hasFile('invoice_file')) {
-                $files['invoice'] = $request->file('invoice_file')
-                    ->storeAs('public/invoices', 'INVOICE_'.$request->inv_no.'.pdf');
+                $files[] = [
+                    'type' => 'invoice',
+                    'path' => $request->file('invoice_file')
+                        ->storeAs('public/invoices', 'INVOICE_'.$request->inv_no.'.pdf')
+                ];
             }
             if ($request->hasFile('fakturpajak_file')) {
-                $files['fakturpajak'] = $request->file('fakturpajak_file')
-                    ->storeAs('public/faktur', 'FAKTURPAJAK_'.$request->inv_no.'.pdf');
+                $files[] = [
+                    'type' => 'fakturpajak',
+                    'path' => $request->file('fakturpajak_file')
+                        ->storeAs('public/faktur', 'FAKTURPAJAK_'.$request->inv_no.'.pdf')
+                ];
             }
             if ($request->hasFile('suratjalan_file')) {
-                $files['suratjalan'] = $request->file('suratjalan_file')
-                    ->storeAs('public/suratjalan', 'SURATJALAN_'.$request->inv_no.'.pdf');
+                $files[] = [
+                    'type' => 'suratjalan',
+                    'path' => $request->file('suratjalan_file')
+                        ->storeAs('public/suratjalan', 'SURATJALAN_'.$request->inv_no.'.pdf')
+                ];
             }
             if ($request->hasFile('po_file')) {
-                $files['po'] = $request->file('po_file')
-                    ->storeAs('public/po', 'PO_'.$request->inv_no.'.pdf');
+                $files[] = [
+                    'type' => 'po',
+                    'path' => $request->file('po_file')
+                        ->storeAs('public/po', 'PO_'.$request->inv_no.'.pdf')
+                ];
             }
 
-            // Save file references
-            InvDocument::create([
-                'inv_no' => $request->inv_no,
-                'file'   => json_encode($files),
-            ]);
+            // Save file references with type
+            foreach ($files as $file) {
+                InvDocument::create([
+                    'inv_no' => $request->inv_no,
+                    'type' => $file['type'],
+                    'file' => $file['path']
+                ]);
+            }
 
             // Update inv_line references
             foreach ($request->inv_line_detail as $line) {
@@ -255,7 +269,7 @@ class SuperAdminInvHeaderController extends Controller
                     $pdf->save($filepath);
 
                     // Send email with attachment
-                    Mail::to('rizqifarezi@gmail.com')->send(new InvoiceReadyMail([
+                    Mail::to('aqilprofessional@gmail.com')->send(new InvoiceReadyMail([
                         'partner_address' => $partner->adr_line_1 ?? '',
                         'bp_code' => $invHeader->bp_code,
                         'inv_no' => $invHeader->inv_no,
@@ -279,7 +293,7 @@ class SuperAdminInvHeaderController extends Controller
 
                 } catch (\Exception $e) {
                     return response()->json([
-                        'message' => 'Error generating receipt: ' . $e->getMessage()
+                        'message' => 'Error generating receipt: ' . $e->getMessage(). $e->getLine(). $e->getFile()
                     ], 500);
                 }
             case 'Rejected':
@@ -305,5 +319,63 @@ class SuperAdminInvHeaderController extends Controller
         return response()->json([
             'message' => "Invoice {$inv_no} status updated to In Process"
         ]);
+    }
+
+    public function uploadPaymentDocument(Request $request, $inv_no)
+    {
+        try {
+            $request->validate([
+                'payment_file' => 'required|mimes:pdf|max:2048'
+            ]);
+
+            $invHeader = DB::transaction(function () use ($request, $inv_no) {
+                // Find invoice
+                $invHeader = InvHeader::where('inv_no', $inv_no)
+                    ->where('status', 'Ready To Payment')
+                    ->firstOrFail();
+
+                // Handle payment file upload
+                $files = [];
+                if ($request->hasFile('payment_file')) {
+                    $files[] = [
+                        'type' => 'payment',
+                        'path' => $request->file('payment_file')
+                            ->storeAs('public/payments', 'PAYMENT_'.$inv_no.'.pdf')
+                    ];
+                }
+
+                // Save file reference
+                foreach ($files as $file) {
+                    InvDocument::create([
+                        'inv_no' => $inv_no,
+                        'type' => $file['type'],
+                        'file' => $file['path']
+                    ]);
+                }
+
+                // Update invoice status
+                $invHeader->update([
+                    'status' => 'Paid',
+                    'updated_by' => Auth::user()->name,
+                    'actual_date' => now()
+                ]);
+
+                return $invHeader;
+            });
+
+            return response()->json([
+                'message' => "Payment document uploaded and invoice {$inv_no} marked as Paid",
+                'payment_path' => "payments/PAYMENT_{$inv_no}.pdf"
+            ]);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'message' => 'Invoice not found or not in Ready To Payment status'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error uploading payment document: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

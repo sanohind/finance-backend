@@ -87,27 +87,42 @@ class SupplierInvHeaderController extends Controller
             // Handle file uploads if needed
             $files = [];
             if ($request->hasFile('invoice_file')) {
-                $files['invoice'] = $request->file('invoice_file')
-                    ->storeAs('public/invoices', 'INVOICE_'.$request->inv_no.'.pdf');
+                $files[] = [
+                    'type' => 'invoice',
+                    'path' => $request->file('invoice_file')
+                        ->storeAs('public/invoices', 'INVOICE_'.$request->inv_no.'.pdf')
+                ];
             }
             if ($request->hasFile('fakturpajak_file')) {
-                $files['fakturpajak'] = $request->file('fakturpajak_file')
-                    ->storeAs('public/faktur', 'FAKTURPAJAK_'.$request->inv_no.'.pdf');
+                $files[] = [
+                    'type' => 'fakturpajak',
+                    'path' => $request->file('fakturpajak_file')
+                        ->storeAs('public/faktur', 'FAKTURPAJAK_'.$request->inv_no.'.pdf')
+                ];
             }
             if ($request->hasFile('suratjalan_file')) {
-                $files['suratjalan'] = $request->file('suratjalan_file')
-                    ->storeAs('public/suratjalan', 'SURATJALAN_'.$request->inv_no.'.pdf');
+                $files[] = [
+                    'type' => 'suratjalan',
+                    'path' => $request->file('suratjalan_file')
+                        ->storeAs('public/suratjalan', 'SURATJALAN_'.$request->inv_no.'.pdf')
+                ];
             }
             if ($request->hasFile('po_file')) {
-                $files['po'] = $request->file('po_file')
-                    ->storeAs('public/po', 'PO_'.$request->inv_no.'.pdf');
+                $files[] = [
+                    'type' => 'po',
+                    'path' => $request->file('po_file')
+                        ->storeAs('public/po', 'PO_'.$request->inv_no.'.pdf')
+                ];
             }
 
-            // Save file references
-            InvDocument::create([
-                'inv_no' => $request->inv_no,
-                'file'   => json_encode($files),
-            ]);
+            // Save file references with type
+            foreach ($files as $file) {
+                InvDocument::create([
+                    'inv_no' => $request->inv_no,
+                    'type' => $file['type'],
+                    'file' => $file['path']
+                ]);
+            }
 
             // Update inv_line references
             foreach ($request->inv_line_detail as $line) {

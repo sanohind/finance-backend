@@ -161,56 +161,56 @@
                 <img class="logo" src="{{ public_path('storage/public/Logo-sanoh.png') }}" alt="Logo" />
 
                 <h2 class="header-title">Invoice Receipt</h2>
-                <h3 class="header-title2">SANOH0166</h3>
+                <h3 class="header-title2">{{ $invHeader->receipt_number }}</h3>
 
                 <div class="row">
                     <div class="label">Supplier</div>
-                    <div class="value">5224-PT. MULTI KARYA SINARDINAMIKA</div>
+                    <div class="value">{{ $partner_address }}</div>
                 </div>
                 <div class="row">
                     <div class="label">No PO</div>
-                    <div class="value">PL2402698</div>
+                    <div class="value">{{ $po_numbers }}</div>
                 </div>
                 <div class="row">
                     <div class="label">Invoice Number</div>
-                    <div class="value">SANOH 3.7.4</div>
+                    <div class="value">{{ $invHeader->inv_no }}</div>
                 </div>
                 <div class="row">
                     <div class="label">Invoice Date</div>
-                    <div class="value">2025-01-20</div>
+                    <div class="value">{{ \Carbon\Carbon::parse($invHeader->inv_date)->format('Y-m-d') }}</div>
                 </div>
                 <div class="row">
                     <div class="label">Invoice Tax Number</div>
-                    <div class="value">0110003226895312</div>
+                    <div class="value">{{ $invHeader->inv_faktur }}</div>
                 </div>
                 <div class="row">
                     <div class="label">Invoice Tax Date</div>
-                    <div class="value">2025-01-20</div>
+                    <div class="value">{{ \Carbon\Carbon::parse($invHeader->inv_faktur_date)->format('Y-m-d') }}</div>
                 </div>
                 <div class="row">
                     <div class="label">Status</div>
-                    <div class="value">Approved</div>
+                    <div class="value">{{ $invHeader->status }}</div>
                 </div>
 
                 <div class="row-with-currency">
                     <div class="label">Tax Base Amount</div>
                     <div class="currency">IDR</div>
-                    <div class="value">6,274,800.00</div>
+                    <div class="value">{{ number_format($invHeader->tax_base_amount, 2, '.', ',') }}</div>
                 </div>
                 <div class="row-with-currency">
                     <div class="label">Tax Amount (VAT)</div>
                     <div class="currency">IDR</div>
-                    <div class="value">690,255.00</div>
+                    <div class="value">{{ number_format($tax_amount, 2, '.', ',') }}</div>
                 </div>
                 <div class="row-with-currency">
                     <div class="label">PPh Base Amount</div>
                     <div class="currency">IDR</div>
-                    <div class="value">500,000.00</div>
+                    <div class="value">{{ number_format($invHeader->pph_base_amount, 2, '.', ',') }}</div>
                 </div>
                 <div class="row-with-currency">
                     <div class="label">PPh Amount (VAT)</div>
                     <div class="currency">IDR</div>
-                    <div class="value">10,000.00</div>
+                    <div class="value">{{ number_format($pph_amount, 2, '.', ',') }}</div>
                 </div>
 
                 <div class="divider"></div>
@@ -218,7 +218,7 @@
                 <div class="row-with-currency">
                     <div class="label">Total Payment</div>
                     <div class="currency">IDR</div>
-                    <div class="value">7,349,532.00</div>
+                    <div class="value">{{ number_format($invHeader->total_amount, 2, '.', ',') }}</div>
                 </div>
 
                 <div class="bottom-section">
