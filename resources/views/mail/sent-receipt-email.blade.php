@@ -11,7 +11,7 @@ A new notification Invoice Receipt has been confirmed by PT Sanoh Indonesia. Ple
     <p>Invoice Number : {{ $data['inv_no'] }}</p>
     <p>Status : {{ $data['status'] }}</p>
     <p>Invoice Payment Date : {{ $data['plan_date'] }}</p>
-    <p>Invoice Total Amount : {{ $data['total_amount'] }}</p>
+    <p>Invoice Total Amount : Rp {{ number_format($data['total_amount'], 0, ',', '.') }}</p>
 </x-mail::panel>
 
 {{-- <x-mail::button> --}}
