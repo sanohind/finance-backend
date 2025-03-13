@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Local\Partner;
 
 class InvLine extends Model
 {
@@ -63,5 +64,10 @@ class InvLine extends Model
     public function invHeader(): BelongsTo
     {
         return $this->belongsTo(InvHeader::class, 'inv_supplier_no', 'inv_no');
+    }
+
+    public function partner(): BelongsTo
+    {
+        return $this->belongsTo(Partner::class, 'bp_code', 'bp_id');
     }
 }
