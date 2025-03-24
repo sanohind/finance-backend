@@ -72,10 +72,8 @@ class SupplierInvHeaderController extends Controller
                 'inv_date'        => $request->inv_date,
                 'inv_faktur'      => $request->inv_faktur,
                 'inv_faktur_date' => $request->inv_faktur_date,
-                'inv_supplier'    => $request->inv_supplier,
                 'total_dpp'       => $total_dpp,
                 'ppn_id'          => $request->ppn_id,
-                'pph_id'          => $request->pph_id, // Added to mirror the SuperAdmin logic
                 'tax_base_amount' => $tax_base_amount,
                 'tax_amount'      => $tax_amount,
                 'total_amount'    => $total_amount,
