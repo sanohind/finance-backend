@@ -32,7 +32,6 @@ class InvHeader extends Model
         'actual_date',
         'inv_faktur',
         'inv_faktur_date',
-        'inv_supplier',
         'total_dpp',
         'ppn_id',
         'tax_base_amount',

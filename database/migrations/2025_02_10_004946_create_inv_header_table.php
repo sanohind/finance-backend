@@ -27,7 +27,6 @@ return new class extends Migration
             $table->string('inv_faktur')->nullable();
             $table->date('inv_faktur_date')->nullable();
 
-            $table->string('inv_supplier')->nullable();
             $table->integer('total_dpp')->nullable();
 
             // Relation PPN
