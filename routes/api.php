@@ -114,3 +114,5 @@ Route::middleware(['auth:sanctum', 'userRole:3'])->prefix('supplier-finance')->g
 
     Route::post('logout', [AuthController::class, 'logout']);
 });
+
+// Route for sync data from second database
