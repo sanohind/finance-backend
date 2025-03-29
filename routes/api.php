@@ -112,7 +112,7 @@ Route::middleware(['auth:sanctum', 'userRole:3'])->prefix('supplier-finance')->g
     Route::get('inv-line/{inv_no}', [SupplierInvLineController::class, 'getInvLine']);
     Route::get('inv-line/outstanding', [SupplierInvLineController::class, 'getOutstandingInvLine']);
 
-    Route::post('logout', [AuthController::class, 'logout']);
+    Route::post('login', [AuthController::class, 'logout']);
 });
 
 // Route for sync data from second database
