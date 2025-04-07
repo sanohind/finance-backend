@@ -49,7 +49,7 @@ class SupplierInvHeaderController extends Controller
             // Gather total DPP from selected inv lines
             foreach ($request->inv_line_detail as $line) {
                 $invLine = InvLine::find($line);
-                $total_dpp = $invLine->receipt_amount;
+                $total_dpp += $invLine->approve_qty * $invLine->receipt_unit_price;
             }
 
             // Fetch the chosen PPN record
