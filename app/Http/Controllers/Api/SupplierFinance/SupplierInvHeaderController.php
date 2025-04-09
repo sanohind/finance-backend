@@ -44,27 +44,30 @@ class SupplierInvHeaderController extends Controller
             $sp_code = Auth::user()->bp_code;
             $request->validated();
 
-            // Calculate totals
             $total_dpp = 0;
+
+            // Gather total DPP from selected inv lines
             foreach ($request->inv_line_detail as $line) {
                 $invLine = InvLine::find($line);
                 $total_dpp += $invLine->approve_qty * $invLine->receipt_unit_price;
             }
 
-            // Find needed tax info
+            // Fetch the chosen PPN record
             $ppn = InvPpn::find($request->ppn_id);
-            $ppnRate = $ppn ? $ppn->ppn_rate : 0;
+            $ppnRate = $ppn ? $ppn->ppn_rate : null;
+            if ($ppnRate === null) {
+                return response()->json([
+                    'message' => 'PPN Rate not found',
+                ], 404);
+            }
+
             $tax_base_amount = $total_dpp;
             $tax_amount      = $tax_base_amount + ($tax_base_amount * $ppnRate);
             $total_amount    = $tax_amount;
 
-            // Create new invoice header
-            // IMPORTANT: Instead of using $request->inv_no directly here,
-            // you may decide to auto-generate your own OR accept the one from frontend.
-            // Below we just use whatever the request has for example, but keep reading
-            // to see how we pass $invHeader->inv_no to InvDocument.
+            // Create the InvHeader record (note the inclusion of pph_id similar to SuperAdmin)
             $invHeader = InvHeader::create([
-                'inv_no'          => $request->inv_no,  // or generate a brand new inv_no if you prefer
+                'inv_no'          => $request->inv_no,
                 'bp_code'         => $sp_code,
                 'inv_date'        => $request->inv_date,
                 'inv_faktur'      => $request->inv_faktur,
@@ -79,48 +82,50 @@ class SupplierInvHeaderController extends Controller
                 'created_by'      => Auth::user()->name,
             ]);
 
-            // Handle file uploads; each file is stored, then we create an InvDocument
-            // referencing *$invHeader->inv_no* to ensure correct linkage
-
+            // Handle file uploads if needed
             $files = [];
-
             if ($request->hasFile('invoice_file')) {
-                $pdf = $request->file('invoice_file');
-                $path = $pdf->store('public/invoices');
-                $files[] = ['type' => 'invoice', 'path' => $path];
+                $files[] = [
+                    'type' => 'invoice',
+                    'path' => $request->file('invoice_file')
+                        ->storeAs('public/invoices', 'INVOICE_'.$request->inv_no.'.pdf')
+                ];
             }
-
             if ($request->hasFile('fakturpajak_file')) {
-                $pdf = $request->file('fakturpajak_file');
-                $path = $pdf->store('public/faktur');
-                $files[] = ['type' => 'fakturpajak', 'path' => $path];
+                $files[] = [
+                    'type' => 'fakturpajak',
+                    'path' => $request->file('fakturpajak_file')
+                        ->storeAs('public/faktur', 'FAKTURPAJAK_'.$request->inv_no.'.pdf')
+                ];
             }
-
             if ($request->hasFile('suratjalan_file')) {
-                $pdf = $request->file('suratjalan_file');
-                $path = $pdf->store('public/suratjalan');
-                $files[] = ['type' => 'suratjalan', 'path' => $path];
+                $files[] = [
+                    'type' => 'suratjalan',
+                    'path' => $request->file('suratjalan_file')
+                        ->storeAs('public/suratjalan', 'SURATJALAN_'.$request->inv_no.'.pdf')
+                ];
             }
-
             if ($request->hasFile('po_file')) {
-                $pdf = $request->file('po_file');
-                $path = $pdf->store('public/po');
-                $files[] = ['type' => 'po', 'path' => $path];
+                $files[] = [
+                    'type' => 'po',
+                    'path' => $request->file('po_file')
+                        ->storeAs('public/po', 'PO_'.$request->inv_no.'.pdf')
+                ];
             }
 
-            // Link each uploaded file to the new invoice number from $invHeader
+            // Save file references with type
             foreach ($files as $file) {
                 InvDocument::create([
-                    'inv_no' => $invHeader->inv_no,  // NOTE: we take the actual inv_no from the newly created record
-                    'type'   => $file['type'],
-                    'file'   => $file['path'],
+                    'inv_no' => $request->inv_no,
+                    'type' => $file['type'],
+                    'file' => $file['path']
                 ]);
             }
 
-            // Update lines
+            // Update inv_line references
             foreach ($request->inv_line_detail as $line) {
                 InvLine::where('inv_line_id', $line)->update([
-                    'inv_supplier_no' => $invHeader->inv_no,
+                    'inv_supplier_no' => $request->inv_no,
                     'inv_due_date'    => $request->inv_date,
                 ]);
             }
@@ -128,7 +133,7 @@ class SupplierInvHeaderController extends Controller
             return $invHeader;
         });
 
-        // Return the newly created InvHeader resource as usual
+        // Return the newly created InvHeader outside the transaction
         return new InvHeaderResource($invHeader);
     }
 
