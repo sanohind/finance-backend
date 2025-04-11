@@ -19,6 +19,7 @@ class InvHeaderResource extends JsonResource
             'bp_code'           => $this->bp_code,
             'plan_date'         => $this->plan_date,
             'actual_date'       => $this->actual_date,
+            'inv_date'          => $this->inv_date,
             'inv_faktur'        => $this->inv_faktur,
             'inv_faktur_date'   => $this->inv_faktur_date,
             'ppn_id'            => $this->ppn_id,
