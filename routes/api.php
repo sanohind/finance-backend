@@ -55,7 +55,7 @@ Route::middleware(['auth:sanctum', 'userRole:1'])->prefix('super-admin')->group(
     Route::get('ppn', [SuperAdminInvHeaderController::class, 'getPpn']);
 
     // Invoice lines
-    Route::get('inv-line/{bp_code}', [SuperAdminInvLineController::class, 'getAllInvLine']);
+    Route::get('inv-line', [SuperAdminInvLineController::class, 'getInvLineTransaction']);
     Route::get('inv-line/{inv_no}', [SuperAdminInvLineController::class, 'getInvLine']);
     Route::get('inv-line/outstanding/{bp_code}', [SuperAdminInvLineController::class, 'getOutstandingInvLine']);
 
@@ -84,7 +84,7 @@ Route::middleware(['auth:sanctum', 'userRole:2'])->prefix('finance')->group(func
     Route::get('pph', [FinanceInvHeaderController::class, 'getPph']);
 
     // Invoice lines
-    Route::get('inv-line/{bp_code}', [FinanceInvLineController::class, 'getInvLineTransaction']);
+    Route::get('inv-line', [FinanceInvLineController::class, 'getInvLineTransaction']);
     Route::get('inv-line/{inv_no}', [FinanceInvLineController::class, 'getInvLine']);
     Route::get('inv-line/outstanding/{bp_code}', [FinanceInvLineController::class, 'getOutstandingInvLine']);
 

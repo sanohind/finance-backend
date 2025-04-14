@@ -17,10 +17,12 @@ class FinanceInvLineController extends Controller
         return InvLineResource::collection($invLines);
     }
 
-    public function getInvLineTransaction($bp_code)
+    public function getInvLineTransaction()
     {
-        $invLines = InvLine::with('partner')->where('bp_id', $bp_code)->get();
+        // Retrieve all InvLine records without any filtering
+        $invLines = InvLine::all();
 
+        // Return the collection using the resource
         return InvLineResource::collection($invLines);
     }
 
