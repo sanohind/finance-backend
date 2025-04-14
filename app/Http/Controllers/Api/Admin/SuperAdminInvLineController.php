@@ -11,12 +11,10 @@ use Carbon\Carbon;
 
 class SuperAdminInvLineController extends Controller
 {
-    public function getInvLineTransaction()
+    public function getAllInvLine($bp_code)
     {
-        // Retrieve all InvLine records without any filtering
-        $invLines = InvLine::all();
+        $invLines = InvLine::with('partner')->where('bp_id', $bp_code)->get();
 
-        // Return the collection using the resource
         return InvLineResource::collection($invLines);
     }
 
