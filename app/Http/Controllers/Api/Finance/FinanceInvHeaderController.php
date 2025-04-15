@@ -38,6 +38,26 @@ class FinanceInvHeaderController extends Controller
         return response()->json($pph);
     }
 
+    public function getInvHeaderDetail($inv_no)
+    {
+        $invHeader = InvHeader::with([
+            'invLines',      // relationship to invoice lines
+            'documents',     // relationship to documents
+            'partner',       // relationship to partner
+            'invPpn',        // relationship to PPN
+            'invPph',        // relationship to PPH
+            // add more relationships as needed
+        ])->where('inv_no', $inv_no)->first();
+
+        if (!$invHeader) {
+            return response()->json([
+                'message' => 'Invoice header not found'
+            ], 404);
+        }
+
+        return new InvHeaderResource($invHeader);
+    }
+
     public function update(FinanceInvHeaderUpdateRequest $request, $inv_no)
     {
         // Check if status is Rejected but no reason provided
