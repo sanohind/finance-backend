@@ -156,11 +156,11 @@ class FinanceInvHeaderController extends Controller
 
                     // Generate PDF
                     $pdf = PDF::loadView('printreceipt', [
-                        'invHeader' => $invHeader,
+                        'invHeader'       => $invHeader,
                         'partner_address' => $partner->adr_line_1 ?? '',
-                        'po_numbers' => $poNumbers,
-                        'tax_amount' => $taxAmount,
-                        'pph_amount' => $pphAmount,
+                        'po_numbers'      => $poNumbers,
+                        'tax_amount'      => $taxAmount,
+                        'pph_amount'      => $pphAmount,
                     ]);
 
                     // Define the storage path
@@ -177,23 +177,23 @@ class FinanceInvHeaderController extends Controller
                     // Send email with attachment
                     Mail::to('rizqifarezi@gmail.com')->send(new InvoiceReadyMail([
                         'partner_address' => $partner->adr_line_1 ?? '',
-                        'bp_code' => $invHeader->bp_code,
-                        'inv_no' => $invHeader->inv_no,
-                        'status' => $invHeader->status,
-                        'total_amount' => $invHeader->total_amount,
-                        'plan_date' => $invHeader->plan_date,
-                        'filepath' => $filepath
+                        'bp_code'         => $invHeader->bp_code,
+                        'inv_no'          => $invHeader->inv_no,
+                        'status'          => $invHeader->status,
+                        'total_amount'    => $invHeader->total_amount,
+                        'plan_date'       => $invHeader->plan_date,
+                        'filepath'        => $filepath
                     ]));
 
                     // Update invoice with receipt path and number
                     $invHeader->update([
-                        'receipt_path' => "receipts/RECEIPT_{$inv_no}.pdf",
+                        'receipt_path'   => "receipts/RECEIPT_{$inv_no}.pdf",
                         'receipt_number' => $receiptNumber
                     ]);
 
                     return response()->json([
-                        'message' => "Invoice {$inv_no} Is Ready To Payment",
-                        'receipt_path' => "receipts/RECEIPT_{$inv_no}.pdf",
+                        'message'        => "Invoice {$inv_no} Is Ready To Payment",
+                        'receipt_path'   => "receipts/RECEIPT_{$inv_no}.pdf",
                         'receipt_number' => $receiptNumber
                     ]);
 
