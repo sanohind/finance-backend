@@ -174,7 +174,8 @@ class SuperAdminInvHeaderController extends Controller
         $invHeader = DB::transaction(function () use ($request, $inv_no) {
             $request->validated();
 
-            $invHeader = InvHeader::findOrFail($inv_no);
+            // Load invLines relationship to avoid null on foreach
+            $invHeader = InvHeader::with('invLines')->findOrFail($inv_no);
 
             // 1) Fetch chosen PPH record
             $pph = InvPph::find($request->pph_id);
