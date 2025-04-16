@@ -177,60 +177,70 @@ class SuperAdminInvHeaderController extends Controller
             // Load invLines relationship to avoid null on foreach
             $invHeader = InvHeader::with('invLines')->findOrFail($inv_no);
 
-            // 1) Fetch chosen PPH record
-            $pph = InvPph::find($request->pph_id);
-            $pphRate = $pph ? $pph->pph_rate : null;
-
-            if ($pphRate === null) {
-                return response()->json([
-                    'message' => 'PPH Rate not found',
-                ], 404);
-            }
-
-            // 2) Manually entered pph_base_amount
-            $pphBase = $request->pph_base_amount;
-
-            // 3) Remove (uncheck) lines from invoice if needed
-            if (is_array($request->inv_line_remove)) {
-                foreach ($request->inv_line_remove as $lineId) {
-                    InvLine::where('inv_line_id', $lineId)->update([
-                        'inv_supplier_no' => null,
-                    ]);
-                }
-            }
-
-            // 4) Recalculate pph_amount
-            $pphAmount = $pphBase + ($pphBase * $pphRate);
-
-            // 5) Use the existing "tax_amount" column as "ppn_amount"
-            $ppnAmount = $invHeader->tax_amount; // (Set during the 'store' step)
-
-            // 6) total_amount = "ppn_amount minus pph_amount"
-            $totalAmount = $ppnAmount - $pphAmount;
-
-            // 7) Update the InvHeader record
-            $invHeader->update([
-                'pph_id'          => $request->pph_id,
-                'pph_base_amount' => $pphBase,
-                'pph_amount'      => $pphAmount,
-                'total_amount'    => $totalAmount,
-                'status'          => $request->status,
-                'plan_date'       => $request->plan_date,
-                'reason'          => $request->reason,
-                'updated_by'      => Auth::user()->name,
-            ]);
-
-            // Modified "Rejected" flow:
-            // If status is Rejected, remove inv_supplier_no from every related line
+            // If status is Rejected, skip pph/plan_date logic
             if ($request->status === 'Rejected') {
+                // Make sure reason is filled
                 if (empty($request->reason)) {
                     throw new \Exception('Reason is required when rejecting an invoice');
                 }
+
+                // Update InvHeader without requiring pph fields or plan_date
+                $invHeader->update([
+                    'status'     => $request->status,
+                    'reason'     => $request->reason,
+                    'updated_by' => Auth::user()->name,
+                ]);
+
+                // Remove inv_supplier_no from every related line
                 foreach ($invHeader->invLines as $line) {
                     $line->update([
                         'inv_supplier_no' => null,
                     ]);
                 }
+
+            } else {
+                // 1) Fetch chosen PPH record
+                $pph = InvPph::find($request->pph_id);
+                $pphRate = $pph ? $pph->pph_rate : null;
+
+                if ($pphRate === null) {
+                    return response()->json([
+                        'message' => 'PPH Rate not found',
+                    ], 404);
+                }
+
+                // 2) Manually entered pph_base_amount
+                $pphBase = $request->pph_base_amount;
+
+                // 3) Remove (uncheck) lines from invoice if needed
+                if (is_array($request->inv_line_remove)) {
+                    foreach ($request->inv_line_remove as $lineId) {
+                        InvLine::where('inv_line_id', $lineId)->update([
+                            'inv_supplier_no' => null,
+                        ]);
+                    }
+                }
+
+                // 4) Recalculate pph_amount
+                $pphAmount = $pphBase + ($pphBase * $pphRate);
+
+                // 5) Use the existing "tax_amount" column as "ppn_amount"
+                $ppnAmount = $invHeader->tax_amount; // (Set during the 'store' step)
+
+                // 6) total_amount = "ppn_amount minus pph_amount"
+                $totalAmount = $ppnAmount - $pphAmount;
+
+                // 7) Update the InvHeader record
+                $invHeader->update([
+                    'pph_id'          => $request->pph_id,
+                    'pph_base_amount' => $pphBase,
+                    'pph_amount'      => $pphAmount,
+                    'total_amount'    => $totalAmount,
+                    'status'          => $request->status,
+                    'plan_date'       => $request->plan_date,
+                    'reason'          => $request->reason,
+                    'updated_by'      => Auth::user()->name,
+                ]);
             }
 
             return $invHeader;
