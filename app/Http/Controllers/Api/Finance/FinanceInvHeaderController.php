@@ -186,7 +186,7 @@ class FinanceInvHeaderController extends Controller
                     $pdf->save($filepath);
 
                     // Send email with attachment
-                    Mail::to('rizqifarezi@gmail.com')->send(new InvoiceReadyMail([
+                    Mail::to('neyvagheida@gmail.com')->send(new InvoiceReadyMail([
                         'partner_address' => $partner->adr_line_1 ?? '',
                         'bp_code'         => $invHeader->bp_code,
                         'inv_no'          => $invHeader->inv_no,
