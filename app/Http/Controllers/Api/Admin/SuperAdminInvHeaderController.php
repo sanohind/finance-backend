@@ -175,7 +175,7 @@ class SuperAdminInvHeaderController extends Controller
             $request->validated();
 
             // Load invLines relationship to avoid null on foreach
-            $invHeader = InvHeader::with('invLines')->findOrFail($inv_no);
+            $invHeader = InvHeader::with('invLine')->findOrFail($inv_no);
 
             // If status is Rejected, skip pph/plan_date logic
             if ($request->status === 'Rejected') {
