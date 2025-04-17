@@ -195,6 +195,7 @@ class SuperAdminInvHeaderController extends Controller
                 foreach ($invHeader->invLine as $line) {
                     $line->update([
                         'inv_supplier_no' => null,
+                        'inv_due_date'    => null,
                     ]);
                 }
 
