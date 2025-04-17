@@ -192,7 +192,7 @@ class SuperAdminInvHeaderController extends Controller
                 ]);
 
                 // Remove inv_supplier_no from every related line
-                foreach ($invHeader->invLines as $line) {
+                foreach ($invHeader->invLine as $line) {
                     $line->update([
                         'inv_supplier_no' => null,
                     ]);
