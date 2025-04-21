@@ -49,20 +49,32 @@ class SuperAdminInvHeaderController extends Controller
     public function store(SuperAdminInvHeaderStoreRequest $request)
     {
         $invHeader = DB::transaction(function () use ($request) {
-            $sp_code = Auth::user()->bp_code;
             $request->validated();
 
             $total_dpp = 0;
 
             // Gather total DPP from selected inv lines
+            $firstInvLine = null;
             foreach ($request->inv_line_detail as $line) {
                 $invLine = InvLine::find($line);
+                if (!$invLine) {
+                    throw new \Exception("InvLine with ID {$line} not found.");
+                }
+                if (!$firstInvLine) {
+                    $firstInvLine = $invLine;
+                }
                 $total_dpp += $invLine->approve_qty * $invLine->receipt_unit_price;
             }
 
+            // Use bp_id from the first selected InvLine as bp_code for InvHeader
+            if (!$firstInvLine) {
+                throw new \Exception("No InvLine selected.");
+            }
+            $bp_code = $firstInvLine->bp_id;
+
             // Fetch the chosen PPN record
             $ppn = InvPpn::find($request->ppn_id);
-            $ppnRate         =  $ppn->ppn_rate;
+            $ppnRate = $ppn ? $ppn->ppn_rate : null;
 
             if ($ppnRate === null) {
                 return response()->json([
@@ -78,7 +90,7 @@ class SuperAdminInvHeaderController extends Controller
             // Create InvHeader
             $invHeader = InvHeader::create([
                 'inv_no'          => $request->inv_no,
-                'bp_code'         => $sp_code,
+                'bp_code'         => $bp_code, // Use bp_id from InvLine
                 'inv_date'        => $request->inv_date,
                 'inv_faktur'      => $request->inv_faktur,
                 'inv_faktur_date' => $request->inv_faktur_date,
