@@ -24,7 +24,7 @@ class SupplierDashboardController extends Controller
         $data['in_process_invoices'] = InvHeader::where('bp_code', $bp_code)->where('status', 'In Process')->count();
         $data['rejected_invoices'] = InvHeader::where('bp_code', $bp_code)->where('status', 'Rejected')->count();
         $data['ready_to_payment_invoices'] = InvHeader::where('bp_code', $bp_code)->where('status', 'Ready To Payment')->count();
-        $data['done_invoices'] = InvHeader::where('bp_code', $bp_code)->where('status', 'Done')->count();
+        $data['paid_invoices'] = InvHeader::where('bp_code', $bp_code)->where('status', 'Paid')->count();
 
         return response()->json([
             'success' => true,
