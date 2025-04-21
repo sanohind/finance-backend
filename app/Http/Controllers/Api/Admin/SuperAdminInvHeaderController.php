@@ -10,6 +10,7 @@ use App\Http\Requests\SuperAdminInvHeaderStoreRequest;
 use Illuminate\Support\Facades\DB;
 use App\Http\Resources\InvHeaderResource;
 use App\Http\Requests\SuperAdminInvHeaderUpdateRequest;
+use App\Http\Requests\SuperAdminPaymentDocumentRequest;
 use App\Models\InvHeader;
 use App\Models\InvLine;
 use App\Models\InvDocument;
@@ -360,61 +361,34 @@ class SuperAdminInvHeaderController extends Controller
         ]);
     }
 
-    public function uploadPaymentDocument(Request $request, $inv_no)
+    public function uploadPaymentDocument(SuperAdminPaymentDocumentRequest $request, $inv_no)
     {
-        try {
-            $request->validate([
-                'payment_file' => 'required|mimes:pdf|max:2048'
-            ]);
+        $invHeader = InvHeader::where('inv_no', $inv_no)
+            ->where('status', 'Ready To Payment')
+            ->firstOrFail();
 
-            $invHeader = DB::transaction(function () use ($request, $inv_no) {
-                // Find invoice
-                $invHeader = InvHeader::where('inv_no', $inv_no)
-                    ->where('status', 'Ready To Payment')
-                    ->firstOrFail();
+        // Store the file
+        $file = $request->file('payment_file');
+        $filePath = $file->storeAs('public/payments', 'PAYMENT_'.$inv_no.'.pdf');
 
-                // Handle payment file upload
-                $files = [];
-                if ($request->hasFile('payment_file')) {
-                    $files[] = [
-                        'type' => 'payment',
-                        'path' => $request->file('payment_file')
-                            ->storeAs('public/payments', 'PAYMENT_'.$inv_no.'.pdf')
-                    ];
-                }
+        // Save file reference
+        InvDocument::create([
+            'inv_no' => $inv_no,
+            'type'   => 'payment',
+            'file'   => $filePath
+        ]);
 
-                // Save file reference
-                foreach ($files as $file) {
-                    InvDocument::create([
-                        'inv_no' => $inv_no,
-                        'type' => $file['type'],
-                        'file' => $file['path']
-                    ]);
-                }
+        // Update invoice status
+        $invHeader->update([
+            'status'       => 'Paid',
+            'updated_by'   => Auth::user()->name,
+            'actual_date'  => now()
+        ]);
 
-                // Update invoice status
-                $invHeader->update([
-                    'status' => 'Paid',
-                    'updated_by' => Auth::user()->name,
-                    'actual_date' => now()
-                ]);
-
-                return $invHeader;
-            });
-
-            return response()->json([
-                'message' => "Payment document uploaded and invoice {$inv_no} marked as Paid",
-                'payment_path' => "payments/PAYMENT_{$inv_no}.pdf"
-            ]);
-
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json([
-                'message' => 'Invoice not found or not in Ready To Payment status'
-            ], 404);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error uploading payment document: ' . $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'success'      => true,
+            'message'      => "Payment document uploaded and invoice {$inv_no} marked as Paid",
+            'payment_path' => "payments/PAYMENT_{$inv_no}.pdf"
+        ]);
     }
 }
