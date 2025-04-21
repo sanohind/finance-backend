@@ -51,7 +51,7 @@ Route::middleware(['auth:sanctum', 'userRole:1'])->prefix('super-admin')->group(
     Route::put('inv-header/{inv_no}', [SuperAdminInvHeaderController::class, 'update']);
     Route::put('inv-header/in-process/{inv_no}', [SuperAdminInvHeaderController::class, 'updateStatusToInProcess']);
     Route::get('inv-header/detail/{inv_no}', [SuperAdminInvHeaderController::class, 'getInvHeaderDetail']);
-    Route::put('inv-header/upload-payment/{inv_no}', [SuperAdminInvHeaderController::class, 'uploadPaymentDocument']);
+    Route::post('inv-header/upload-payment/{inv_no}', [SuperAdminInvHeaderController::class, 'uploadPaymentDocument']);
     Route::get('pph', [SuperAdminInvHeaderController::class, 'getPph']);
     Route::get('ppn', [SuperAdminInvHeaderController::class, 'getPpn']);
 
@@ -80,7 +80,7 @@ Route::middleware(['auth:sanctum', 'userRole:2'])->prefix('finance')->group(func
     Route::put('inv-header/{inv_no}', [FinanceInvHeaderController::class, 'update']);
     Route::put('inv-header/in-process/{inv_no}', [FinanceInvHeaderController::class, 'updateStatusToInProcess']);
     Route::get('inv-header/detail/{inv_no}', [FinanceInvHeaderController::class, 'getInvHeaderDetail']);
-    Route::put('inv-header/upload-payment/{inv_no}', [FinanceInvHeaderController::class, 'uploadPaymentDocument']);
+    Route::post('inv-header/upload-payment/{inv_no}', [FinanceInvHeaderController::class, 'uploadPaymentDocument']);
 
     // PPh
     Route::get('pph', [FinanceInvHeaderController::class, 'getPph']);
