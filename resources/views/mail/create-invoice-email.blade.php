@@ -10,7 +10,6 @@ Notification New Invoice has been Create by {{ $data['partner_address'] }}. Plea
     <p>Supplier : {{ $data['bp_code'] }} - {{ $data['partner_address'] }}</p>
     <p>Invoice Number : {{ $data['inv_no'] }}</p>
     <p>Status : {{ $data['status'] }}</p>
-    <p>Invoice Plant Date : {{ $data['plan_date'] }}</p>
     <p>Invoice Total Amount : Rp {{ number_format($data['total_amount'], 0, ',', '.') }}</p>
 </x-mail::panel>
 
