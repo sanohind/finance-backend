@@ -132,7 +132,9 @@ class SupplierInvHeaderController extends Controller
                 ]);
             }
 
-            // Send email with attachment
+            $partner = \App\Models\Local\Partner::where('bp_code', $invHeader->bp_code)->select('adr_line_1')->first();
+
+            // Send email
             Mail::to('neyvagheida@gmail.com')->send(new InvoiceCreateMail([
                 'partner_address' => $partner->adr_line_1 ?? '',
                 'bp_code'         => $invHeader->bp_code,
