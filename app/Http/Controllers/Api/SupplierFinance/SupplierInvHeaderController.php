@@ -13,6 +13,8 @@ use App\Models\InvDocument;
 use App\Models\InvLine;
 use App\Models\InvPpn;
 use App\Models\InvPph;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\InvoiceCreateMail;
 
 class SupplierInvHeaderController extends Controller
 {
@@ -129,6 +131,16 @@ class SupplierInvHeaderController extends Controller
                     'inv_due_date'    => $request->inv_date,
                 ]);
             }
+
+            // Send email with attachment
+            Mail::to('neyvagheida@gmail.com')->send(new InvoiceCreateMail([
+                'partner_address' => $partner->adr_line_1 ?? '',
+                'bp_code'         => $invHeader->bp_code,
+                'inv_no'          => $invHeader->inv_no,
+                'status'          => $invHeader->status,
+                'total_amount'    => $invHeader->total_amount,
+                'plan_date'       => $invHeader->plan_date,
+            ]));
 
             return $invHeader;
         });
