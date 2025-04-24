@@ -15,8 +15,8 @@ class UserController extends Controller
 {
     public function getBusinessPartner()
     {
-        $partner = Partner::where('bp_code', 'LIKE', 'SL%')->get();
-        return response()->json($partner);
+        $partners = Partner::all();
+        return response()->json($partners);
     }
 
     public function index()

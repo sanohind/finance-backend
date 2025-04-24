@@ -11,9 +11,11 @@ use App\Models\InvLine;
 use Illuminate\Support\Facades\Mail;
 use App\Http\Requests\FinanceInvHeaderUpdateRequest;
 use App\Http\Requests\FinancePaymentDocumentRequest;
+use App\Http\Requests\FinanceInvHeaderStoreRequest;
 use App\Http\Resources\InvHeaderResource;
 use App\Mail\InvoiceReadyMail;
 use App\Models\InvPph;
+use App\Models\InvPpn;
 use App\Models\InvDocument;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -52,6 +54,118 @@ class FinanceInvHeaderController extends Controller
 
         // Return the InvHeader data using the resource
         // The resource will only include InvHeader fields, not related data
+        return new InvHeaderResource($invHeader);
+    }
+
+    public function store(FinanceInvHeaderStoreRequest $request)
+    {
+        $invHeader = DB::transaction(function () use ($request) {
+            $request->validated();
+
+            $total_dpp = 0;
+
+            // Gather total DPP from selected inv lines
+            $firstInvLine = null;
+            foreach ($request->inv_line_detail as $line) {
+                $invLine = InvLine::find($line);
+                if (!$invLine) {
+                    throw new \Exception("InvLine with ID {$line} not found.");
+                }
+                if (!$firstInvLine) {
+                    $firstInvLine = $invLine;
+                }
+                $total_dpp += $invLine->approve_qty * $invLine->receipt_unit_price;
+            }
+
+            // Use bp_id from the first selected InvLine as bp_code for InvHeader
+            if (!$firstInvLine) {
+                throw new \Exception("No InvLine selected.");
+            }
+            $bp_code = $firstInvLine->bp_id;
+
+            // Fetch the chosen PPN record
+            $ppn = InvPpn::find($request->ppn_id);
+            $ppnRate = $ppn ? $ppn->ppn_rate : null;
+
+            if ($ppnRate === null) {
+                return response()->json([
+                    'message' => 'PPN Rate not found',
+                ], 404);
+            }
+
+            // Calculate amounts
+            $tax_base_amount = $total_dpp;
+            $tax_amount      = $tax_base_amount + ($tax_base_amount * $ppnRate);
+            $total_amount    = $tax_amount;
+
+            // Create InvHeader
+            $invHeader = InvHeader::create([
+                'inv_no'          => $request->inv_no,
+                'bp_code'         => $bp_code, // Use bp_id from InvLine
+                'inv_date'        => $request->inv_date,
+                'inv_faktur'      => $request->inv_faktur,
+                'inv_faktur_date' => $request->inv_faktur_date,
+                'total_dpp'       => $total_dpp,
+                'ppn_id'          => $request->ppn_id,
+                'tax_base_amount' => $tax_base_amount,
+                'tax_amount'      => $tax_amount,
+                'total_amount'    => $total_amount,
+                'status'          => 'New',
+                'created_by'      => Auth::user()->name,
+            ]);
+
+            // Handle file uploads
+            $files = [];
+            if ($request->hasFile('invoice_file')) {
+                $files[] = [
+                    'type' => 'invoice',
+                    'path' => $request->file('invoice_file')
+                        ->storeAs('public/invoices', 'INVOICE_'.$request->inv_no.'.pdf')
+                ];
+            }
+            if ($request->hasFile('fakturpajak_file')) {
+                $files[] = [
+                    'type' => 'fakturpajak',
+                    'path' => $request->file('fakturpajak_file')
+                        ->storeAs('public/faktur', 'FAKTURPAJAK_'.$request->inv_no.'.pdf')
+                ];
+            }
+            if ($request->hasFile('suratjalan_file')) {
+                $files[] = [
+                    'type' => 'suratjalan',
+                    'path' => $request->file('suratjalan_file')
+                        ->storeAs('public/suratjalan', 'SURATJALAN_'.$request->inv_no.'.pdf')
+                ];
+            }
+            if ($request->hasFile('po_file')) {
+                $files[] = [
+                    'type' => 'po',
+                    'path' => $request->file('po_file')
+                        ->storeAs('public/po', 'PO_'.$request->inv_no.'.pdf')
+                ];
+            }
+
+            // Save file references with type
+            foreach ($files as $file) {
+                InvDocument::create([
+                    'inv_no' => $request->inv_no,
+                    'type' => $file['type'],
+                    'file' => $file['path']
+                ]);
+            }
+
+            // Update inv_line references
+            foreach ($request->inv_line_detail as $line) {
+                InvLine::where('inv_line_id', $line)->update([
+                    'inv_supplier_no' => $request->inv_no,
+                    'inv_due_date'    => $request->inv_date,
+                ]);
+            }
+
+            return $invHeader;
+        });
+
+        // Return the newly created InvHeader outside the transaction
         return new InvHeaderResource($invHeader);
     }
 

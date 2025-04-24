@@ -76,6 +76,7 @@ Route::middleware(['auth:sanctum', 'userRole:2'])->prefix('finance')->group(func
 
     // Invoice management
     Route::get('inv-header', [FinanceInvHeaderController::class, 'getInvHeader']);
+    Route::post('inv-header/store', [FinanceInvHeaderController::class, 'store']);
     Route::get('inv-header/bp-code/{bp_code}', [FinanceInvHeaderController::class, 'getInvHeaderByBpCode']);
     Route::put('inv-header/{inv_no}', [FinanceInvHeaderController::class, 'update']);
     Route::put('inv-header/in-process/{inv_no}', [FinanceInvHeaderController::class, 'updateStatusToInProcess']);
