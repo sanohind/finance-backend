@@ -41,6 +41,12 @@ class FinanceInvHeaderController extends Controller
         return response()->json($pph);
     }
 
+    public function getPpn()
+    {
+        $ppn = InvPpn::select('ppn_id', 'ppn_description')->get();
+        return response()->json($ppn);
+    }
+
     public function getInvHeaderDetail($inv_no)
     {
         // Fetch only the InvHeader model by inv_no, without any relationships

@@ -85,6 +85,7 @@ Route::middleware(['auth:sanctum', 'userRole:2'])->prefix('finance')->group(func
 
     // PPh
     Route::get('pph', [FinanceInvHeaderController::class, 'getPph']);
+    Route::get('ppn', [FinanceInvHeaderController::class, 'getPpn']);
 
     // Invoice lines
     Route::get('inv-line/{bp_code}', [FinanceInvLineController::class, 'getInvLineTransaction']);
