@@ -14,7 +14,7 @@ class InvoiceReceiptController extends Controller
     {
         try {
             // Get all data from SQL Server
-            $sqlsrvData = InvReceipt::where('actual_receipt_year', 2024)->orderByDesc('actual_receipt_date')->get();
+            $sqlsrvData = InvReceipt::where('actual_receipt_year', 2025)->orderByDesc('actual_receipt_date')->get();
 
             // Copy all data to local database
             foreach ($sqlsrvData as $data) {
