@@ -365,28 +365,17 @@ class FinanceInvHeaderController extends Controller
             ->where('status', 'Ready To Payment')
             ->firstOrFail();
 
-        // Store the file
-        $file = $request->file('payment_file');
-        $filePath = $file->storeAs('public/payments', 'PAYMENT_'.$inv_no.'.pdf');
-
-        // Save file reference
-        InvDocument::create([
-            'inv_no' => $inv_no,
-            'type'   => 'payment',
-            'file'   => $filePath
-        ]);
-
-        // Update invoice status
+        // Update invoice status and actual_date (no file upload)
         $invHeader->update([
-            'status'       => 'Paid',
-            'updated_by'   => Auth::user()->name,
-            'payment_date' => now()
+            'status'      => 'Paid',
+            'updated_by'  => Auth::user()->name,
+            'actual_date' => $request->actual_date,
         ]);
 
         return response()->json([
-            'success'      => true,
-            'message'      => "Payment document uploaded and invoice {$inv_no} marked as Paid",
-            'payment_path' => "payments/PAYMENT_{$inv_no}.pdf"
+            'success' => true,
+            'message' => "Invoice {$inv_no} marked as Paid",
+            'actual_date' => $request->actual_date
         ]);
     }
 }
