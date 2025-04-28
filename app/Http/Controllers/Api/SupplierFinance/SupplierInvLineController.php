@@ -19,7 +19,7 @@ class SupplierInvLineController extends Controller
         return InvLineResource::collection($invLines);
     }
 
-    public function getUninvoicedInvLineTransaction(Request $request)
+    public function getUninvoicedInvLineTransaction()
     {
         $sp_code = Auth::user()->bp_code;
 
