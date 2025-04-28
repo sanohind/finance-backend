@@ -25,7 +25,8 @@ class FinanceInvHeaderController extends Controller
 {
     public function getInvHeader()
     {
-        $invHeaders = InvHeader::all();
+        // Eager load the invLine relationship for all invoice headers
+        $invHeaders = InvHeader::with('invLine')->get();
         return InvHeaderResource::collection($invHeaders);
     }
 
