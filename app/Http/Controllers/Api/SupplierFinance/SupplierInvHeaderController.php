@@ -23,8 +23,10 @@ class SupplierInvHeaderController extends Controller
     {
         $sp_code = Auth::user()->bp_code;
 
-        // Fetch inv_headers filtered by the authenticated user's bp_code
-        $invHeaders = InvHeader::where('bp_code', $sp_code)->get();
+        // Fetch inv_headers filtered by the authenticated user's bp_code, with related invLine
+        $invHeaders = InvHeader::with('invLine')
+            ->where('bp_code', $sp_code)
+            ->get();
 
         return InvHeaderResource::collection($invHeaders);
     }
