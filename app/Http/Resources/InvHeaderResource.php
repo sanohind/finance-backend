@@ -38,6 +38,7 @@ class InvHeaderResource extends JsonResource
             'updated_by'        => $this->updated_by,
             'created_at'        => $this->created_at,
             'updated_at'        => $this->updated_at,
+            'inv_lines' => InvLineResource::collection($this->whenLoaded('invLine')),
         ];
     }
 }
