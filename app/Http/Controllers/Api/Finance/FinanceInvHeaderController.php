@@ -20,6 +20,7 @@ use App\Models\InvDocument;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
+use App\Mail\InvoiceCreateMail;
 
 class FinanceInvHeaderController extends Controller
 {
@@ -167,6 +168,19 @@ class FinanceInvHeaderController extends Controller
                     'inv_due_date'    => $request->inv_date,
                 ]);
             }
+
+            $partner = \App\Models\Local\Partner::where('bp_code', $invHeader->bp_code)->select('adr_line_1')->first();
+
+            // Send email
+            Mail::to('neyvagheida@gmail.com')->send(new InvoiceCreateMail([
+                'partner_address' => $partner->adr_line_1 ?? '',
+                'bp_code'         => $invHeader->bp_code,
+                'inv_no'          => $invHeader->inv_no,
+                'status'          => $invHeader->status,
+                'total_amount'    => $invHeader->total_amount,
+                'plan_date'       => $invHeader->plan_date,
+            ]));
+
 
             return $invHeader;
         });
