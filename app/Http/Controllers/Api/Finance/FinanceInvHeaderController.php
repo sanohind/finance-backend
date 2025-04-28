@@ -169,7 +169,7 @@ class FinanceInvHeaderController extends Controller
                 ]);
             }
 
-            $partner = \App\Models\Local\Partner::where('bp_code', $invHeader->bp_code)->select('adr_line_1')->first();
+            $partner = Partner::where('bp_code', $invHeader->bp_code)->select('adr_line_1')->first();
 
             // Send email
             Mail::to('neyvagheida@gmail.com')->send(new InvoiceCreateMail([
