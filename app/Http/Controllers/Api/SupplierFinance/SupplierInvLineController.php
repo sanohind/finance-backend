@@ -23,10 +23,13 @@ class SupplierInvLineController extends Controller
     {
         $sp_code = Auth::user()->bp_code;
 
-        // Only get inv lines where inv_supplier_no and inv_due_date are null
         $invLines = InvLine::where('bp_id', $sp_code)
-            ->whereNull('inv_supplier_no')
-            ->whereNull('inv_due_date')
+            ->where(function($q) {
+                $q->whereNull('inv_supplier_no')->orWhere('inv_supplier_no', '');
+            })
+            ->where(function($q) {
+                $q->whereNull('inv_due_date')->orWhere('inv_due_date', '');
+            })
             ->get();
 
         return InvLineResource::collection($invLines);
