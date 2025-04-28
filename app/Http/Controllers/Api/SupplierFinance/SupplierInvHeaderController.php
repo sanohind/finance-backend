@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests\SupplierInvHeaderStoreRequest;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\InvHeaderResource;
+use App\Http\Requests\SupplierInvHeaderRejectedRequest;
 use Illuminate\Support\Facades\DB;
 use App\Models\InvHeader;
 use App\Models\InvDocument;
@@ -26,6 +27,47 @@ class SupplierInvHeaderController extends Controller
         $invHeaders = InvHeader::where('bp_code', $sp_code)->get();
 
         return InvHeaderResource::collection($invHeaders);
+    }
+
+    public function rejectInvoice(SupplierInvHeaderRejectedRequest $request, $inv_no)
+    {
+        $request->validate([
+            'reason' => 'required|string|max:255',
+        ]);
+
+        $sp_code = Auth::user()->bp_code;
+
+        $invHeader = InvHeader::where('inv_no', $inv_no)
+            ->where('bp_code', $sp_code)
+            ->where('status', 'New')
+            ->first();
+
+        if (!$invHeader) {
+            return response()->json([
+                'message' => 'Invoice not found or cannot be rejected (already processed by admin)'
+            ], 404);
+        }
+
+        DB::transaction(function () use ($invHeader, $request) {
+            // Update invoice status and reason
+            $invHeader->update([
+                'status'     => 'Rejected',
+                'reason'     => $request->reason,
+                'updated_by' => Auth::user()->name,
+            ]);
+
+            // Remove inv_supplier_no and inv_due_date from all related inv_lines
+            foreach ($invHeader->invLine as $line) {
+                $line->update([
+                    'inv_supplier_no' => null,
+                    'inv_due_date'    => null,
+                ]);
+            }
+        });
+
+        return response()->json([
+            'message' => "Invoice {$inv_no} has been rejected and can be invoiced again."
+        ]);
     }
 
     public function getPpn()
