@@ -118,7 +118,7 @@ Route::middleware(['auth:sanctum', 'userRole:3'])->prefix('supplier-finance')->g
     Route::get('inv-line', [SupplierInvLineController::class, 'getInvLineTransaction']);
     Route::get('inv-line/{inv_no}', [SupplierInvLineController::class, 'getInvLine']);
     Route::get('inv-line/outstanding', [SupplierInvLineController::class, 'getOutstandingInvLine']);
-    Route::get('inv-line/invoice', [SupplierInvLineController::class, 'getUninvoicedInvLineTransaction']);
+    Route::get('inv-line/supinvoice', [SupplierInvLineController::class, 'getUninvoicedInvLineTransaction']);
 
     Route::post('logout', [AuthController::class, 'logout']);
 });
