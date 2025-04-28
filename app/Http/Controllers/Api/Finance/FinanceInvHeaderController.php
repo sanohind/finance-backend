@@ -49,8 +49,8 @@ class FinanceInvHeaderController extends Controller
 
     public function getInvHeaderDetail($inv_no)
     {
-        // Fetch only the InvHeader model by inv_no, without any relationships
-        $invHeader = InvHeader::where('inv_no', $inv_no)->first();
+        // Fetch InvHeader with related invLine and ppn
+        $invHeader = InvHeader::with(['invLine'])->where('inv_no', $inv_no)->first();
 
         if (!$invHeader) {
             return response()->json([
@@ -58,8 +58,7 @@ class FinanceInvHeaderController extends Controller
             ], 404);
         }
 
-        // Return the InvHeader data using the resource
-        // The resource will only include InvHeader fields, not related data
+        // Return the InvHeader data including related invLine and ppn
         return new InvHeaderResource($invHeader);
     }
 
