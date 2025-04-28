@@ -91,6 +91,7 @@ Route::middleware(['auth:sanctum', 'userRole:2'])->prefix('finance')->group(func
     Route::get('inv-line/{bp_code}', [FinanceInvLineController::class, 'getInvLineTransaction']);
     Route::get('inv-line/{inv_no}', [FinanceInvLineController::class, 'getInvLine']);
     Route::get('inv-line/outstanding/{bp_code}', [FinanceInvLineController::class, 'getOutstandingInvLine']);
+    Route::get('inv-line/invoice/{bp_code}', [FinanceInvLineController::class, 'getUninvoicedInvLineTransaction']);
 
     // Document streaming
     Route::get('files/{folder}/{filename}', [FinanceInvDocumentController::class, 'streamFile']);
@@ -115,6 +116,7 @@ Route::middleware(['auth:sanctum', 'userRole:3'])->prefix('supplier-finance')->g
     Route::get('inv-line', [SupplierInvLineController::class, 'getInvLineTransaction']);
     Route::get('inv-line/{inv_no}', [SupplierInvLineController::class, 'getInvLine']);
     Route::get('inv-line/outstanding', [SupplierInvLineController::class, 'getOutstandingInvLine']);
+    Route::get('inv-line/invoice', [SupplierInvLineController::class, 'getUninvoicedInvLineTransaction']);
 
     Route::post('logout', [AuthController::class, 'logout']);
 });
