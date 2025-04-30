@@ -16,6 +16,7 @@ use App\Models\InvPpn;
 use App\Models\InvPph;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\InvoiceCreateMail;
+use Illuminate\Support\Facades\Storage;
 
 class SupplierInvHeaderController extends Controller
 {
@@ -193,6 +194,19 @@ class SupplierInvHeaderController extends Controller
 
         // Return the newly created InvHeader outside the transaction
         return new InvHeaderResource($invHeader);
+    }
+
+    public function stream($type, $filename)
+    {
+        $allowedTypes = ['invoices', 'faktur', 'suratjalan', 'po'];
+        if (!in_array($type, $allowedTypes)) {
+            abort(404);
+        }
+        $path = $type . '/' . $filename;
+        if (!Storage::disk('public')->exists($path)) {
+            abort(404);
+        }
+        return response()->file(storage_path('app/public/' . $path));
     }
 
 }

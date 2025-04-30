@@ -83,6 +83,9 @@ Route::middleware(['auth:sanctum', 'userRole:2'])->prefix('finance')->group(func
     Route::get('inv-header/detail/{inv_no}', [FinanceInvHeaderController::class, 'getInvHeaderDetail']);
     Route::post('inv-header/upload-payment/{inv_no}', [FinanceInvHeaderController::class, 'uploadPaymentDocument']);
 
+    //Document
+    Route::get('/stream/{type}/{filename}', [FinanceInvHeaderController::class, 'stream']);
+
     // PPh
     Route::get('pph', [FinanceInvHeaderController::class, 'getPph']);
     Route::get('ppn', [FinanceInvHeaderController::class, 'getPpn']);
@@ -111,6 +114,9 @@ Route::middleware(['auth:sanctum', 'userRole:3'])->prefix('supplier-finance')->g
     Route::get('inv-header', [SupplierInvHeaderController::class, 'getInvHeader']);
     Route::post('inv-header/store', [SupplierInvHeaderController::class, 'store']);
     Route::put('inv-header/reject/{inv_no}', [SupplierInvHeaderController::class, 'rejectInvoice']);
+
+    // Document
+    Route::get('/stream/{type}/{filename}', [SupplierInvHeaderController::class, 'stream']);
 
     Route::get('ppn', [SupplierInvHeaderController::class, 'getPpn']);
 
