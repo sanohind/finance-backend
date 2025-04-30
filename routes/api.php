@@ -23,6 +23,8 @@ Route::post('/login', [AuthController::class, 'login']);
 // Route for sync data from second database
 Route::get('local2/sync-inv-line', [LocalDataController::class, 'syncInvLine'])->middleware('auth:sanctum');
 
+Route::get('/stream/{type}/{filename}', [FinanceInvHeaderController::class, 'stream']);
+
 Route::get('sync', [InvoiceReceiptController::class, 'copyInvLines']);
 
 // Admin routes
@@ -61,7 +63,7 @@ Route::middleware(['auth:sanctum', 'userRole:1'])->prefix('super-admin')->group(
     Route::get('inv-line/outstanding/{bp_code}', [SuperAdminInvLineController::class, 'getOutstandingInvLine']);
 
     // Document streaming
-    Route::get('files/{folder}/{filename}', [SuperAdminInvDocumentController::class, 'streamFile']);
+    // Route::get('files/{folder}/{filename}', [SuperAdminInvDocumentController::class, 'streamFile']);
 
     Route::post('logout', [AuthController::class, 'logout']);
 });
@@ -84,7 +86,7 @@ Route::middleware(['auth:sanctum', 'userRole:2'])->prefix('finance')->group(func
     Route::post('inv-header/upload-payment/{inv_no}', [FinanceInvHeaderController::class, 'uploadPaymentDocument']);
 
     //Document
-    Route::get('/stream/{type}/{filename}', [FinanceInvHeaderController::class, 'stream']);
+    // Route::get('/stream/{type}/{filename}', [FinanceInvHeaderController::class, 'stream']);
 
     // PPh
     Route::get('pph', [FinanceInvHeaderController::class, 'getPph']);
