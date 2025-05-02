@@ -228,9 +228,9 @@ class FinanceInvHeaderController extends Controller
             } else {
                 // 1) Fetch chosen PPH record
                 $pph = InvPph::find($request->pph_id);
-                $pphRate = $pph ? $pph->pph_rate : null;
+                $pphRate = $pph ? $pph->pph_rate : 0; // Default to 0 if not found
 
-                if ($pphRate === null) {
+                if ($pph === null) {
                     return response()->json([
                         'message' => 'PPH Rate not found',
                     ], 404);
@@ -248,8 +248,8 @@ class FinanceInvHeaderController extends Controller
                     }
                 }
 
-                // 4) Recalculate pph_amount
-                $pphAmount = $pphBase + ($pphBase * $pphRate);
+                // 4) Recalculate pph_amount (pph_base_amount * pph_rate)
+                $pphAmount = $pphBase * $pphRate;
 
                 // 5) Use the existing "tax_amount" column as "ppn_amount"
                 $ppnAmount = $invHeader->tax_amount;
