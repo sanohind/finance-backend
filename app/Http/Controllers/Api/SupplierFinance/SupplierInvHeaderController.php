@@ -135,28 +135,28 @@ class SupplierInvHeaderController extends Controller
                 $files[] = [
                     'type' => 'invoice',
                     'path' => $request->file('invoice_file')
-                        ->storeAs('public/invoices', 'INVOICE_'.$request->inv_no.'.pdf')
+                        ->storeAs('invoices', 'INVOICE_'.$request->inv_no.'.pdf')
                 ];
             }
             if ($request->hasFile('fakturpajak_file')) {
                 $files[] = [
                     'type' => 'fakturpajak',
                     'path' => $request->file('fakturpajak_file')
-                        ->storeAs('public/faktur', 'FAKTURPAJAK_'.$request->inv_no.'.pdf')
+                        ->storeAs('faktur', 'FAKTURPAJAK_'.$request->inv_no.'.pdf')
                 ];
             }
             if ($request->hasFile('suratjalan_file')) {
                 $files[] = [
                     'type' => 'suratjalan',
                     'path' => $request->file('suratjalan_file')
-                        ->storeAs('public/suratjalan', 'SURATJALAN_'.$request->inv_no.'.pdf')
+                        ->storeAs('suratjalan', 'SURATJALAN_'.$request->inv_no.'.pdf')
                 ];
             }
             if ($request->hasFile('po_file')) {
                 $files[] = [
                     'type' => 'po',
                     'path' => $request->file('po_file')
-                        ->storeAs('public/po', 'PO_'.$request->inv_no.'.pdf')
+                        ->storeAs('po', 'PO_'.$request->inv_no.'.pdf')
                 ];
             }
 
@@ -206,7 +206,7 @@ class SupplierInvHeaderController extends Controller
         if (!Storage::disk('public')->exists($path)) {
             abort(404);
         }
-        return response()->file(storage_path('app/public/public/' . $path));
+        return response()->file(storage_path('app/public/' . $path));
     }
 
 }
