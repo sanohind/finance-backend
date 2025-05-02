@@ -23,7 +23,7 @@ Route::post('/login', [AuthController::class, 'login']);
 // Route for sync data from second database
 Route::get('local2/sync-inv-line', [LocalDataController::class, 'syncInvLine'])->middleware('auth:sanctum');
 
-Route::get('/stream/{type}/{filename}', [FinanceInvHeaderController::class, 'stream']);
+Route::get('/stream/{type}/{filename}', [FinanceInvDocumentController::class, 'stream']);
 
 Route::get('sync', [InvoiceReceiptController::class, 'copyInvLines']);
 
