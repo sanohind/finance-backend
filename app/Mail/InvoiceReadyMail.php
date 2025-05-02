@@ -23,13 +23,15 @@ class InvoiceReadyMail extends Mailable
     {
         $this->data = [
             'partner_address' => $data['partner_address'] ?? '',
-            'inv_no' => $data['inv_no'] ?? '',
-            'bp_code' => $data['bp_code'] ?? '',
-            'status' => $data['status'] ?? '',
-            'total_amount' => $data['total_amount'] ?? 0,
-            'plan_date' => $data['plan_date'] ?? '',
-            'filepath' => $data['filepath'] ?? '',
-            'url' => '',
+            'inv_no'          => $data['inv_no'] ?? '',
+            'bp_code'         => $data['bp_code'] ?? '',
+            'status'          => $data['status'] ?? '',
+            'total_amount'    => $data['total_amount'] ?? 0,
+            'plan_date'       => $data['plan_date'] ?? '',
+            'filepath'        => $data['filepath'] ?? '',
+            'tax_amount'      => $data['tax_amount'] ?? 0,
+            'pph_amount'      => $data['pph_amount'] ?? 0,
+            'url'             => '',
         ];
     }
 

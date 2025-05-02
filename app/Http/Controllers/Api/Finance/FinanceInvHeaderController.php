@@ -127,28 +127,28 @@ class FinanceInvHeaderController extends Controller
                 $files[] = [
                     'type' => 'invoice',
                     'path' => $request->file('invoice_file')
-                        ->storeAs('public/invoices', 'INVOICE_'.$request->inv_no.'.pdf')
+                        ->storeAs('invoices', 'INVOICE_'.$request->inv_no.'.pdf')
                 ];
             }
             if ($request->hasFile('fakturpajak_file')) {
                 $files[] = [
                     'type' => 'fakturpajak',
                     'path' => $request->file('fakturpajak_file')
-                        ->storeAs('public/faktur', 'FAKTURPAJAK_'.$request->inv_no.'.pdf')
+                        ->storeAs('faktur', 'FAKTURPAJAK_'.$request->inv_no.'.pdf')
                 ];
             }
             if ($request->hasFile('suratjalan_file')) {
                 $files[] = [
                     'type' => 'suratjalan',
                     'path' => $request->file('suratjalan_file')
-                        ->storeAs('public/suratjalan', 'SURATJALAN_'.$request->inv_no.'.pdf')
+                        ->storeAs('suratjalan', 'SURATJALAN_'.$request->inv_no.'.pdf')
                 ];
             }
             if ($request->hasFile('po_file')) {
                 $files[] = [
                     'type' => 'po',
                     'path' => $request->file('po_file')
-                        ->storeAs('public/po', 'PO_'.$request->inv_no.'.pdf')
+                        ->storeAs('po', 'PO_'.$request->inv_no.'.pdf')
                 ];
             }
 
@@ -329,7 +329,9 @@ class FinanceInvHeaderController extends Controller
                         'status'          => $invHeader->status,
                         'total_amount'    => $invHeader->total_amount,
                         'plan_date'       => $invHeader->plan_date,
-                        'filepath'        => $filepath
+                        'filepath'        => $filepath,
+                        'tax_amount'      => $taxAmount,
+                        'pph_amount'      => $pphAmount,
                     ]));
 
                     // Update invoice with receipt path and number
