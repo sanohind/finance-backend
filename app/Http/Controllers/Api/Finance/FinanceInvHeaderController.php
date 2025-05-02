@@ -293,13 +293,15 @@ class FinanceInvHeaderController extends Controller
                         ->unique()
                         ->implode(', ');
 
-                    // Calculate tax amount (PPN)
-                    $ppnRate = $invHeader->invPpn->ppn_rate ?? 0;
-                    $taxAmount = $invHeader->tax_base_amount * $ppnRate;
+                    // Calculate tax amount (VAT, 11% of total_dpp)
+                    $taxAmount = $invHeader->total_dpp * 0.11;
 
-                    // Calculate PPH amount
+                    // Get PPh base amount from the model
+                    $pphBaseAmount = $invHeader->pph_base_amount;
+
+                    // Calculate PPh amount (pph_base_amount * pph_rate)
                     $pphRate = $invHeader->invPph->pph_rate ?? 0;
-                    $pphAmount = $invHeader->pph_base_amount * $pphRate;
+                    $pphAmount = $pphBaseAmount * $pphRate;
 
                     // Generate PDF
                     $pdf = PDF::loadView('printreceipt', [
@@ -307,6 +309,7 @@ class FinanceInvHeaderController extends Controller
                         'partner_address' => $partner->adr_line_1 ?? '',
                         'po_numbers'      => $poNumbers,
                         'tax_amount'      => $taxAmount,
+                        'pph_base_amount' => $pphBaseAmount,
                         'pph_amount'      => $pphAmount,
                     ]);
 
@@ -331,6 +334,7 @@ class FinanceInvHeaderController extends Controller
                         'plan_date'       => $invHeader->plan_date,
                         'filepath'        => $filepath,
                         'tax_amount'      => $taxAmount,
+                        'pph_base_amount' => $pphBaseAmount,
                         'pph_amount'      => $pphAmount,
                     ]));
 
