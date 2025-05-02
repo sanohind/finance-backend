@@ -183,7 +183,7 @@ class SupplierInvHeaderController extends Controller
             Mail::to('neyvagheida@gmail.com')->send(new InvoiceCreateMail([
                 'partner_address' => $partner->adr_line_1 ?? '',
                 'bp_code'         => $invHeader->bp_code,
-                'inv_no'          => $invHeader->inv_no,
+                'inv_no'          => $request->inv_no,
                 'status'          => $invHeader->status,
                 'total_amount'    => $invHeader->total_amount,
                 'plan_date'       => $invHeader->plan_date,
