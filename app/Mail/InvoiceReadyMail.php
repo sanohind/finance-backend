@@ -30,6 +30,7 @@ class InvoiceReadyMail extends Mailable
             'plan_date'       => $data['plan_date'] ?? '',
             'filepath'        => $data['filepath'] ?? '',
             'tax_amount'      => $data['tax_amount'] ?? 0,
+            'pph_base_amount' => $data['pph_base_amount'] ?? 0, // <-- add this line
             'pph_amount'      => $data['pph_amount'] ?? 0,
             'url'             => '',
         ];
