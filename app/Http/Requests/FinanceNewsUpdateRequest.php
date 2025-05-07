@@ -16,10 +16,10 @@ class FinanceNewsUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => 'required|string|max:255',
+            'title' => 'nullable|string|max:255',
             'description' => 'nullable|string',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
             'document' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5000',
         ];
     }
