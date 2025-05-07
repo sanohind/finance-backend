@@ -68,6 +68,6 @@ class InvLine extends Model
 
     public function partner(): BelongsTo
     {
-        return $this->belongsTo(Partner::class, 'bp_code', 'bp_id');
+        return $this->belongsTo(Partner::class, 'bp_id', 'bp_code');
     }
 }
