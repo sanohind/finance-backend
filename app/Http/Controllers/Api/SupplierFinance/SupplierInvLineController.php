@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\InvLine;
 use App\Http\Resources\InvLineResource;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB; // Add this
+use Illuminate\Support\Facades\Log; // Add this
 
 class SupplierInvLineController extends Controller
 {
@@ -22,20 +24,39 @@ class SupplierInvLineController extends Controller
     public function getUninvoicedInvLineTransaction()
     {
         $sp_code = Auth::user()->bp_code;
+        Log::info('[SupplierInvLineController] Attempting getUninvoicedInvLineTransaction for bp_code: ' . $sp_code);
 
+        // Log the query and bindings
         $query = InvLine::where('bp_id', $sp_code)
-            ->where(function($q) {
-                $q->whereNull('inv_supplier_no')
-                ->orWhere('inv_supplier_no', '')
-                ->orWhere('inv_supplier_no', ' ');
-            })
-            ->where(function($q) {
-                $q->whereNull('inv_due_date')
-                ->orWhere('inv_due_date', '')
-                ->orWhere('inv_due_date', ' ');
-            });
+            ->whereNull('inv_supplier_no')
+            ->whereNull('inv_due_date');
+
+        Log::info('[SupplierInvLineController] SQL Query: ' . $query->toSql());
+        Log::info('[SupplierInvLineController] Bindings: ', $query->getBindings());
 
         $invLines = $query->get();
+
+        if ($invLines->isEmpty()) {
+            Log::warning('[SupplierInvLineController] No records found with inv_supplier_no IS NULL and inv_due_date IS NULL.');
+            Log::info('[SupplierInvLineController] Checking for empty strings instead of NULL...');
+
+            $countWithEmptyStrings = InvLine::where('bp_id', $sp_code)
+                ->where(function ($q) {
+                    $q->where('inv_supplier_no', '')
+                      ->orWhereNull('inv_supplier_no'); // Keep original null check too
+                })
+                ->where(function ($q) {
+                    $q->where('inv_due_date', '')
+                      ->orWhereNull('inv_due_date'); // Keep original null check too
+                })
+                ->count();
+            Log::info('[SupplierInvLineController] Count if checking for empty strings OR NULL for relevant fields: ' . $countWithEmptyStrings);
+
+            $countBpIdOnly = InvLine::where('bp_id', $sp_code)->count();
+            Log::info('[SupplierInvLineController] Total InvLine records for bp_code ' . $sp_code . ': ' . $countBpIdOnly);
+        } else {
+            Log::info('[SupplierInvLineController] Found ' . $invLines->count() . ' uninvoiced lines.');
+        }
 
         return InvLineResource::collection($invLines);
     }
