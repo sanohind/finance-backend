@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\FinanceNewsStoreRequest;
 use App\Http\Requests\FinanceNewsUpdateRequest;
+use Illuminate\Support\Str;
 
 class FinanceNewsController extends Controller
 {
@@ -29,7 +30,13 @@ class FinanceNewsController extends Controller
     {
         $documentPath = null;
         if ($request->hasFile('document')) {
-            $documentPath = $request->file('document')->store('news_documents', 'public');
+            $file = $request->file('document');
+            $originalExtension = $file->getClientOriginalExtension();
+            // Sanitize full title for use in filename, use underscore as separator
+            $slugTitle = Str::slug($request->title, '_'); // Use full title
+            $fileName = "NEWS_{$slugTitle}.{$originalExtension}";
+            // Store on the 'public' disk, in 'news_documents' folder, with the constructed filename
+            $documentPath = $file->storeAs('news_documents', $fileName, 'public');
         }
 
         $news = News::create([
@@ -63,7 +70,13 @@ class FinanceNewsController extends Controller
             if ($documentPath && Storage::disk('public')->exists($documentPath)) {
                 Storage::disk('public')->delete($documentPath);
             }
-            $documentPath = $request->file('document')->store('news_documents', 'public');
+            $file = $request->file('document');
+            $originalExtension = $file->getClientOriginalExtension();
+            // Use current title (from request or existing record) for filename
+            $titleToUse = $request->has('title') ? $request->title : $news->title;
+            $slugTitle = Str::slug($titleToUse, '_'); // Use full title
+            $fileName = "NEWS_{$slugTitle}.{$originalExtension}";
+            $documentPath = $file->storeAs('news_documents', $fileName, 'public');
         }
 
         $news->update([
@@ -90,5 +103,14 @@ class FinanceNewsController extends Controller
         }
         $news->delete();
         return response()->json(['message' => 'News deleted successfully.']);
+    }
+
+    public function streamDocument($filename)
+    {
+        $path = 'news_documents/' . $filename;
+        if (!Storage::disk('public')->exists($path)) {
+            abort(404, 'Document not found.');
+        }
+        return response()->file(storage_path('app/public/' . $path));
     }
 }

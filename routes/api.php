@@ -93,6 +93,7 @@ Route::middleware(['auth:sanctum', 'userRole:2'])->prefix('finance')->group(func
     Route::get('news/edit/{id}', [FinanceNewsController::class, 'edit']);
     Route::put('news/update/{id}', [FinanceNewsController::class, 'update']);
     Route::delete('news/delete/{id}', [FinanceNewsController::class, 'destroy']);
+    Route::get('news/document/{filename}', [FinanceNewsController::class, 'streamDocument'])->middleware('auth');
 
     //Document
     // Route::get('/stream/{type}/{filename}', [FinanceInvHeaderController::class, 'stream']);
@@ -128,6 +129,7 @@ Route::middleware(['auth:sanctum', 'userRole:3'])->prefix('supplier-finance')->g
 
     // News
     Route::get('news', [SupplierNewsController::class, 'index']);
+    Route::get('news/document/{filename}', [SupplierNewsController::class, 'streamDocument'])->middleware('auth');
 
     // Document
     Route::get('/stream/{type}/{filename}', [SupplierInvHeaderController::class, 'stream']);
