@@ -12,9 +12,11 @@ use App\Http\Controllers\Api\Finance\FinanceDashboardController;
 use App\Http\Controllers\Api\Finance\FinanceInvHeaderController;
 use App\Http\Controllers\Api\Finance\FinanceInvLineController;
 use App\Http\Controllers\Api\Finance\FinanceInvDocumentController;
+use App\Http\Controllers\Api\Finance\FinanceNewsController;
 use App\Http\Controllers\Api\SupplierFinance\SupplierDashboardController;
 use App\Http\Controllers\Api\SupplierFinance\SupplierInvHeaderController;
 use App\Http\Controllers\Api\SupplierFinance\SupplierInvLineController;
+use App\Http\Controllers\Api\SupplierFinance\SupplierNewsController;
 use App\Http\Controllers\Api\Local2\LocalDataController;
 use App\Http\Controllers\Api\Local2\InvoiceReceiptController;
 
@@ -85,6 +87,13 @@ Route::middleware(['auth:sanctum', 'userRole:2'])->prefix('finance')->group(func
     Route::get('inv-header/detail/{inv_no}', [FinanceInvHeaderController::class, 'getInvHeaderDetail']);
     Route::post('inv-header/upload-payment/{inv_no}', [FinanceInvHeaderController::class, 'uploadPaymentDocument']);
 
+    // News
+    Route::get('news', [FinanceNewsController::class, 'index']);
+    Route::post('news/store', [FinanceNewsController::class, 'store']);
+    Route::get('news/edit/{id}', [FinanceNewsController::class, 'edit']);
+    Route::put('news/update/{id}', [FinanceNewsController::class, 'update']);
+    Route::delete('news/delete/{id}', [FinanceNewsController::class, 'destroy']);
+
     //Document
     // Route::get('/stream/{type}/{filename}', [FinanceInvHeaderController::class, 'stream']);
 
@@ -116,6 +125,9 @@ Route::middleware(['auth:sanctum', 'userRole:3'])->prefix('supplier-finance')->g
     Route::get('inv-header', [SupplierInvHeaderController::class, 'getInvHeader']);
     Route::post('inv-header/store', [SupplierInvHeaderController::class, 'store']);
     Route::put('inv-header/reject/{inv_no}', [SupplierInvHeaderController::class, 'rejectInvoice']);
+
+    // News
+    Route::get('news', [SupplierNewsController::class, 'index']);
 
     // Document
     Route::get('/stream/{type}/{filename}', [SupplierInvHeaderController::class, 'stream']);
