@@ -27,6 +27,7 @@ class SupplierInvHeaderController extends Controller
         // Fetch inv_headers filtered by the authenticated user's bp_code, with related invLine
         $invHeaders = InvHeader::with('invLine')
             ->where('bp_code', $sp_code)
+            ->orderBy('created_at', 'desc')
             ->get();
 
         return InvHeaderResource::collection($invHeaders);
