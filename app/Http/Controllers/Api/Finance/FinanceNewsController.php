@@ -67,10 +67,10 @@ class FinanceNewsController extends Controller
         }
 
         $news->update([
-            'title' => $request->title,
-            'description' => $request->description,
-            'start_date' => $request->start_date,
-            'end_date' => $request->end_date,
+            'title' => $request->filled('title') ? $request->title : $news->title,
+            'description' => $request->filled('description') ? $request->description : $news->description,
+            'start_date' => $request->filled('start_date') ? $request->start_date : $news->start_date,
+            'end_date' => $request->filled('end_date') ? $request->end_date : $news->end_date,
             'document' => $documentPath,
             'updated_by' => Auth::user()->name,
         ]);
