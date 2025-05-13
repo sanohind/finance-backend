@@ -385,23 +385,24 @@ class FinanceInvHeaderController extends Controller
         ]);
     }
 
-    public function uploadPaymentDocument(FinancePaymentDocumentRequest $request, $inv_no)
+    public function uploadPaymentDocuments(FinancePaymentDocumentRequest $request)
     {
-        $invHeader = InvHeader::where('inv_no', $inv_no)
-            ->where('status', 'Ready To Payment')
-            ->firstOrFail();
+        $invNos = $request->input('inv_nos', []);
+        $updatedBy = Auth::user()->name;
+        $actualDate = $request->input('actual_date');
 
-        // Update invoice status and actual_date (no file upload)
-        $invHeader->update([
-            'status'      => 'Paid',
-            'updated_by'  => Auth::user()->name,
-            'actual_date' => $request->actual_date,
-        ]);
+        InvHeader::whereIn('inv_no', $invNos)
+            ->where('status', 'Ready To Payment')
+            ->update([
+                'status'      => 'Paid',
+                'updated_by'  => $updatedBy,
+                'actual_date' => $actualDate,
+            ]);
 
         return response()->json([
-            'success' => true,
-            'message' => "Invoice {$inv_no} marked as Paid",
-            'actual_date' => $request->actual_date
+            'success'    => true,
+            'message'    => count($invNos) . ' invoices marked as Paid',
+            'actual_date'=> $actualDate,
         ]);
     }
 
