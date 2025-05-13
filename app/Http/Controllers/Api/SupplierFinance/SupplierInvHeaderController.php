@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\InvHeaderResource;
 use App\Http\Requests\SupplierInvHeaderRejectedRequest;
 use Illuminate\Support\Facades\DB;
+use App\Models\User;
+use App\Models\Local\Partner;
 use App\Models\InvHeader;
 use App\Models\InvDocument;
 use App\Models\InvLine;
@@ -178,17 +180,20 @@ class SupplierInvHeaderController extends Controller
                 ]);
             }
 
-            $partner = \App\Models\Local\Partner::where('bp_code', $invHeader->bp_code)->select('adr_line_1')->first();
+            $partner = Partner::where('bp_code', $invHeader->bp_code)->select('adr_line_1')->first();
 
             // Send email
-            Mail::to('neyvagheida@gmail.com')->send(new InvoiceCreateMail([
-                'partner_address' => $partner->adr_line_1 ?? '',
-                'bp_code'         => $invHeader->bp_code,
-                'inv_no'          => $request->inv_no,
-                'status'          => $invHeader->status,
-                'total_amount'    => $invHeader->total_amount,
-                'plan_date'       => $invHeader->plan_date,
-            ]));
+            $adminUsers = User::where('role', 2)->get();
+            foreach ($adminUsers as $adminUser) {
+                Mail::to($adminUser->email)->send(new InvoiceCreateMail([
+                    'partner_address' => $partner->adr_line_1 ?? '',
+                    'bp_code'         => $invHeader->bp_code,
+                    'inv_no'          => $request->inv_no,
+                    'status'          => $invHeader->status,
+                    'total_amount'    => $invHeader->total_amount,
+                    'plan_date'       => $invHeader->plan_date,
+                ]));
+            }
 
             return $invHeader;
         });

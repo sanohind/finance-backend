@@ -14,6 +14,7 @@ use App\Http\Requests\FinancePaymentDocumentRequest;
 use App\Http\Requests\FinanceInvHeaderStoreRequest;
 use App\Http\Resources\InvHeaderResource;
 use App\Mail\InvoiceReadyMail;
+use App\Models\User;
 use App\Models\InvPph;
 use App\Models\InvPpn;
 use App\Models\InvDocument;
@@ -172,15 +173,17 @@ class FinanceInvHeaderController extends Controller
             $partner = Partner::where('bp_code', $invHeader->bp_code)->select('adr_line_1')->first();
 
             // Send email
-            Mail::to('neyvagheida@gmail.com')->send(new InvoiceCreateMail([
-                'partner_address' => $partner->adr_line_1 ?? '',
-                'bp_code'         => $invHeader->bp_code,
-                'inv_no'          => $request->inv_no,
-                'status'          => $invHeader->status,
-                'total_amount'    => $invHeader->total_amount,
-                'plan_date'       => $invHeader->plan_date,
-            ]));
-
+            $adminUsers = User::where('role', 2)->get();
+            foreach ($adminUsers as $adminUser) {
+                Mail::to($adminUser->email)->send(new InvoiceCreateMail([
+                    'partner_address' => $partner->adr_line_1 ?? '',
+                    'bp_code'         => $invHeader->bp_code,
+                    'inv_no'          => $request->inv_no,
+                    'status'          => $invHeader->status,
+                    'total_amount'    => $invHeader->total_amount,
+                    'plan_date'       => $invHeader->plan_date,
+                ]));
+            }
 
             return $invHeader;
         });
@@ -325,18 +328,20 @@ class FinanceInvHeaderController extends Controller
                     $pdf->save($filepath);
 
                     // Send email with attachment
-                    Mail::to('neyvagheida@gmail.com')->send(new InvoiceReadyMail([
-                        'partner_address' => $partner->adr_line_1 ?? '',
-                        'bp_code'         => $invHeader->bp_code,
-                        'inv_no'          => $invHeader->inv_no,
-                        'status'          => $invHeader->status,
-                        'total_amount'    => $invHeader->total_amount,
-                        'plan_date'       => $invHeader->plan_date,
-                        'filepath'        => $filepath,
-                        'tax_amount'      => $taxAmount,
-                        'pph_base_amount' => $pphBaseAmount,
-                        'pph_amount'      => $pphAmount,
-                    ]));
+                    $supplierUser = User::where('bp_code', $invHeader->bp_code)->first();
+
+                    if ($supplierUser && $supplierUser->email) {
+                        // Send email with attachment to the supplier
+                        Mail::to($supplierUser->email)->send(new InvoiceReadyMail([
+                            'partner_address' => $partner->adr_line_1 ?? '',
+                            'bp_code'         => $invHeader->bp_code,
+                            'inv_no'          => $invHeader->inv_no,
+                            'status'          => $invHeader->status,
+                            'total_amount'    => $invHeader->total_amount,
+                            'plan_date'       => $invHeader->plan_date,
+                            'filepath'        => $filepath
+                        ]));
+                    }
 
                     // Update invoice with receipt path and number
                     $invHeader->update([
@@ -397,6 +402,25 @@ class FinanceInvHeaderController extends Controller
             'success' => true,
             'message' => "Invoice {$inv_no} marked as Paid",
             'actual_date' => $request->actual_date
+        ]);
+    }
+
+    public function revertToReadyToPayment(Request $request, $inv_no)
+    {
+        $invHeader = InvHeader::where('inv_no', $inv_no)
+            ->where('status', 'Paid')
+            ->firstOrFail();
+
+        // Update invoice status to Ready To Payment and nullify actual_date
+        $invHeader->update([
+            'status'      => 'Ready To Payment',
+            'updated_by'  => Auth::user()->name,
+            'actual_date' => null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Invoice {$inv_no} status reverted to Ready To Payment",
         ]);
     }
 }
