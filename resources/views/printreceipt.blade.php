@@ -188,6 +188,10 @@
                     <div class="value">{{ \Carbon\Carbon::parse($invHeader->inv_faktur_date)->format('Y-m-d') }}</div>
                 </div>
                 <div class="row">
+                    <div class="label">Invoice Payment Plan Date</div>
+                    <div class="value">{{ $invHeader->plan_date ? \Carbon\Carbon::parse($invHeader->plan_date)->format('Y-m-d') : '' }}</div>
+                </div>
+                <div class="row">
                     <div class="label">Status</div>
                     <div class="value">{{ $invHeader->status }}</div>
                 </div>
@@ -210,7 +214,7 @@
                 <div class="row-with-currency">
                     <div class="label">PPh Amount (VAT)</div>
                     <div class="currency">IDR</div>
-                    <div class="value">{{ number_format($pph_amount, 2, '.', ',') }}</div>
+                    <div class="value">{{ number_format($invHeader->pph_amount - $invHeader->pph_base_amount, 2, '.', ',') }}</div>
                 </div>
 
                 <div class="divider"></div>
