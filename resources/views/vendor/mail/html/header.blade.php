@@ -3,7 +3,7 @@
 <td class="header">
 <a href="{{ $url }}" style="display: inline-block;">
 @php
-    $logoPath = public_path('storage/public/Logo-sanoh.png');
+    $logoPath = storage_path('app/public/Logo-sanoh.png'); // Changed to storage_path()
     $logoBase64 = '';
     if (file_exists($logoPath)) {
         $logoData = file_get_contents($logoPath);
