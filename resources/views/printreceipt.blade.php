@@ -158,7 +158,7 @@
         <div class="container">
             <div class="main-content">
                 <!-- Your logo (adjust path as needed) -->
-                <img class="logo" src="{{ public_path('storage/public/Logo-sanoh.png') }}" alt="Logo" />
+                <img class="logo" src="{{ storage_path('app/public/Logo-sanoh.png') }}" alt="Logo" />
 
                 <h2 class="header-title">Invoice Receipt</h2>
                 <h3 class="header-title2">{{ $invHeader->receipt_number }}</h3>
