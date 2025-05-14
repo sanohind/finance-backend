@@ -194,14 +194,15 @@ class FinanceInvHeaderController extends Controller
 
     public function update(FinanceInvHeaderUpdateRequest $request, $inv_no)
     {
-        // Check if status is Rejected but no reason provided
+        // Check if status is Rejected but no reason provided (can stay outside the transaction)
         if ($request->status === 'Rejected' && empty($request->reason)) {
             return response()->json([
                 'message' => 'Reason is required when rejecting an invoice'
             ], 422);
         }
 
-        $invHeader = DB::transaction(function () use ($request, $inv_no) {
+        // Wrap the entire process in a single database transaction
+        return DB::transaction(function () use ($request, $inv_no) {
             $request->validated();
 
             // Eager load invPpn and invPph relationships
@@ -210,7 +211,7 @@ class FinanceInvHeaderController extends Controller
             // If status is Rejected, skip pph/plan_date logic
             if ($request->status === 'Rejected') {
                 if (empty($request->reason)) {
-                    throw new \Exception('Reason is required when rejecting an invoice');
+                    throw new \InvalidArgumentException('Reason is required when rejecting an invoice');
                 }
 
                 // Update InvHeader without requiring PPH or plan_date
@@ -273,102 +274,98 @@ class FinanceInvHeaderController extends Controller
                 ]);
             }
 
-            return $invHeader;
-        });
+            // 8) Respond based on status
+            switch ($invHeader->status) {
+                case 'Ready To Payment':
+                    try {
+                        // Generate receipt number with prefix
+                        $today = Carbon::parse($invHeader->updated_at)->format('Y-m-d');
+                        $receiptCount = InvHeader::whereDate('updated_at', $today)
+                            ->where('status', 'Ready To Payment')
+                            ->count();
+                        $receiptNumber = 'SANOH' . Carbon::parse($invHeader->updated_at)->format('Ymd') . '/' . ($receiptCount + 1);
 
-        // 8) Respond based on status
-        switch ($request->status) {
-            case 'Ready To Payment':
-                try {
-                    // Generate receipt number with prefix
-                    $today = Carbon::parse($invHeader->updated_at)->format('Y-m-d');
-                    $receiptCount = InvHeader::whereDate('updated_at', $today)
-                        ->where('status', 'Ready To Payment')
-                        ->count();
-                    $receiptNumber = 'SANOH' . Carbon::parse($invHeader->updated_at)->format('Ymd') . '/' . ($receiptCount + 1);
+                        // Get partner address
+                        $partner = Partner::where('bp_code', $invHeader->bp_code)->select("adr_line_1")->first();
 
-                    // Get partner address
-                    $partner = Partner::where('bp_code', $invHeader->bp_code)->select("adr_line_1")->first();
+                        // Get PO numbers from inv_lines
+                        $poNumbers = InvLine::where('inv_supplier_no', $inv_no)
+                            ->pluck('po_no')
+                            ->unique()
+                            ->implode(', ');
 
-                    // Get PO numbers from inv_lines
-                    $poNumbers = InvLine::where('inv_supplier_no', $inv_no)
-                        ->pluck('po_no')
-                        ->unique()
-                        ->implode(', ');
+                        // Calculate tax amount (VAT, 11% of total_dpp)
+                        $taxAmount = $invHeader->total_dpp * 0.11;
 
-                    // Calculate tax amount (VAT, 11% of total_dpp)
-                    $taxAmount = $invHeader->total_dpp * 0.11;
+                        // Get PPh base amount from the model
+                        $pphBaseAmount = $invHeader->pph_base_amount;
 
-                    // Get PPh base amount from the model
-                    $pphBaseAmount = $invHeader->pph_base_amount;
+                        // Calculate PPh amount (pph_base_amount * pph_rate)
+                        $pphRate = $invHeader->invPph->pph_rate ?? 0;
+                        $pphAmount = $pphBaseAmount * $pphRate;
 
-                    // Calculate PPh amount (pph_base_amount * pph_rate)
-                    $pphRate = $invHeader->invPph->pph_rate ?? 0;
-                    $pphAmount = $pphBaseAmount * $pphRate;
-
-                    // Generate PDF
-                    $pdf = PDF::loadView('printreceipt', [
-                        'invHeader'       => $invHeader,
-                        'partner_address' => $partner->adr_line_1 ?? '',
-                        'po_numbers'      => $poNumbers,
-                        'tax_amount'      => $taxAmount,
-                        'pph_base_amount' => $pphBaseAmount,
-                        'pph_amount'      => $pphAmount,
-                    ]);
-
-                    // Define the storage path
-                    $filepath = storage_path("app/public/receipts/RECEIPT_{$inv_no}.pdf");
-
-                    // Ensure directory exists
-                    if (!file_exists(dirname($filepath))) {
-                        mkdir(dirname($filepath), 0777, true);
-                    }
-
-                    // Save the PDF
-                    $pdf->save($filepath);
-
-                    // Send email with attachment
-                    $supplierUser = User::where('bp_code', $invHeader->bp_code)->first();
-
-                    if ($supplierUser && $supplierUser->email) {
-                        // Send email with attachment to the supplier
-                        Mail::to($supplierUser->email)->send(new InvoiceReadyMail([
+                        // Generate PDF
+                        $pdf = PDF::loadView('printreceipt', [
+                            'invHeader'       => $invHeader,
                             'partner_address' => $partner->adr_line_1 ?? '',
-                            'bp_code'         => $invHeader->bp_code,
-                            'inv_no'          => $invHeader->inv_no,
-                            'status'          => $invHeader->status,
-                            'total_amount'    => $invHeader->total_amount,
-                            'plan_date'       => $invHeader->plan_date,
-                            'filepath'        => $filepath
-                        ]));
+                            'po_numbers'      => $poNumbers,
+                            'tax_amount'      => $taxAmount,
+                            'pph_base_amount' => $pphBaseAmount,
+                            'pph_amount'      => $pphAmount,
+                        ]);
+
+                        // Define the storage path
+                        $filepath = storage_path("app/public/receipts/RECEIPT_{$inv_no}.pdf");
+
+                        // Ensure directory exists
+                        if (!file_exists(dirname($filepath))) {
+                            mkdir(dirname($filepath), 0777, true);
+                        }
+
+                        // Save the PDF
+                        $pdf->save($filepath);
+
+                        // Send email with attachment
+                        $supplierUser = User::where('bp_code', $invHeader->bp_code)->first();
+
+                        if ($supplierUser && $supplierUser->email) {
+                            // Send email with attachment to the supplier
+                            Mail::to($supplierUser->email)->send(new InvoiceReadyMail([
+                                'partner_address' => $partner->adr_line_1 ?? '',
+                                'bp_code'         => $invHeader->bp_code,
+                                'inv_no'          => $invHeader->inv_no,
+                                'status'          => $invHeader->status,
+                                'total_amount'    => $invHeader->total_amount,
+                                'plan_date'       => $invHeader->plan_date,
+                                'filepath'        => $filepath
+                            ]));
+                        }
+
+                        // Update invoice with receipt path and number
+                        $invHeader->update([
+                            'receipt_path'   => "receipts/RECEIPT_{$inv_no}.pdf",
+                            'receipt_number' => $receiptNumber
+                        ]);
+
+                        return response()->json([
+                            'message'        => "Invoice {$inv_no} Is Ready To Payment",
+                            'receipt_path'   => "receipts/RECEIPT_{$inv_no}.pdf",
+                            'receipt_number' => $receiptNumber
+                        ]);
+
+                    } catch (\Exception $e) {
+                        throw new \RuntimeException('Error generating receipt: ' . $e->getMessage(), 0, $e);
                     }
-
-                    // Update invoice with receipt path and number
-                    $invHeader->update([
-                        'receipt_path'   => "receipts/RECEIPT_{$inv_no}.pdf",
-                        'receipt_number' => $receiptNumber
-                    ]);
-
+                case 'Rejected':
                     return response()->json([
-                        'message'        => "Invoice {$inv_no} Is Ready To Payment",
-                        'receipt_path'   => "receipts/RECEIPT_{$inv_no}.pdf",
-                        'receipt_number' => $receiptNumber
+                        'message' => "Invoice {$inv_no} Rejected: {$invHeader->reason}"
                     ]);
-
-                } catch (\Exception $e) {
+                default:
                     return response()->json([
-                        'message' => 'Error generating receipt: ' . $e->getMessage()
-                    ], 500);
-                }
-            case 'Rejected':
-                return response()->json([
-                    'message' => "Invoice {$inv_no} Rejected: {$request->reason}"
-                ]);
-            default:
-                return response()->json([
-                    'message' => "Invoice {$inv_no} updated"
-                ]);
-        }
+                        'message' => "Invoice {$inv_no} updated to status: {$invHeader->status}"
+                    ]);
+            }
+        });
     }
 
     public function updateStatusToInProcess($inv_no)
