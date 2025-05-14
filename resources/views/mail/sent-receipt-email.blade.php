@@ -1,5 +1,6 @@
 {{-- <x-mail::header :url="$url" hidden/> --}}
 <x-mail::message>
+<img src="{{ asset('storage/Logo-sanoh.png') }}" alt="PT Sanoh Indonesia Logo" style="display: block; margin: 0 auto 20px auto; width: 100px;">
 {{-- header --}}
 <h2>Dear Respective In-Charge,</h2>
 
