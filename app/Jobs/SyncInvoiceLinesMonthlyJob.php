@@ -1,28 +1,50 @@
 <?php
 
-namespace App\Http\Controllers\Api\Local2;
+namespace App\Jobs;
 
-use App\Http\Controllers\Controller;
 use App\Models\ERP\InvReceipt;
 use App\Models\InvLine;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
-class InvoiceReceiptController extends Controller
+class SyncInvoiceLinesMonthlyJob implements ShouldQueue
 {
-    public function copyInvLines()
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    /**
+     * Create a new job instance.
+     */
+    public function __construct()
     {
+        //
+    }
+
+    /**
+     * Execute the job.
+     */
+    public function handle(): void
+    {
+        Log::info('Starting monthly invoice lines synchronization job (payment_doc_date filled, current/last month of this year)...');
+
         try {
-            // Get all data from SQL Server, from March 2025 onwards
-            $currentYear = 2025;
-            $startMonth = 3; // March
+            $currentYear = now()->year;
+            $currentMonth = now()->month;
+            $previousMonth = now()->subMonthNoOverflow()->month;
 
-            $sqlsrvData = InvReceipt::whereYear('actual_receipt_date', $currentYear)
-                                    ->whereMonth('actual_receipt_date', '>=', $startMonth)
-                                    ->orderByDesc('actual_receipt_date')
-                                    ->get();
+            $sqlsrvData = InvReceipt::whereNotNull('payment_doc_date')
+                ->whereYear('payment_doc_date', $currentYear)
+                ->where(function ($query) use ($currentMonth, $previousMonth) {
+                    $query->whereMonth('payment_doc_date', $currentMonth)
+                          ->orWhereMonth('payment_doc_date', $previousMonth);
+                })
+                ->orderByDesc('payment_doc_date')
+                ->get();
 
-            // Copy all data to local database
+            $processedCount = 0;
             foreach ($sqlsrvData as $data) {
                 InvLine::updateOrCreate(
                     [
@@ -73,17 +95,15 @@ class InvoiceReceiptController extends Controller
                         'payment_doc_date' => $data->payment_doc_date
                     ]
                 );
+                $processedCount++;
             }
 
-            return response()->json([
-                'message' => 'Data inv_line successfully copied for year ' . $currentYear . ' from month ' . $startMonth . ' onwards.',
-                'count' => count($sqlsrvData)
-            ]);
+            Log::info('Monthly invoice lines synchronized successfully via job. Records processed: ' . $processedCount);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error copying data: ' . $e->getMessage()
-            ], 500);
+            Log::error('An error occurred during monthly synchronization job: ' . $e->getMessage(), ['exception' => $e]);
         }
+
+        Log::info('Monthly synchronization job process finished.');
     }
 }

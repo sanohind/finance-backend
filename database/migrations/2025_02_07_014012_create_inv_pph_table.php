@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('inv_pph', function (Blueprint $table) {
             $table->id('pph_id');
             $table->string('pph_description', 255)->nullable();
-            $table->decimal('pph_rate')->nullable();
+            $table->decimal('pph_rate', 8, 4)->nullable(); // Ensures DECIMAL(8,4)
             $table->timestamps();
         });
     }

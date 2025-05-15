@@ -214,34 +214,51 @@ class FinanceInvHeaderController extends Controller
                     throw new \InvalidArgumentException('Reason is required when rejecting an invoice');
                 }
 
-                // Update InvHeader without requiring PPH or plan_date
                 $invHeader->update([
                     'status'     => $request->status,
                     'reason'     => $request->reason,
                     'updated_by' => Auth::user()->name,
+                    // Explicitly nullify PPH fields if it's a rejection
+                    'pph_id'          => null,
+                    'pph_base_amount' => null,
+                    'pph_amount'      => null,
                 ]);
 
-                // Remove inv_supplier_no from invLines
                 foreach ($invHeader->invLine as $line) {
                     $line->update([
                         'inv_supplier_no' => null,
                         'inv_due_date'    => null,
                     ]);
                 }
+            } else { // Status is not 'Rejected'
+                $finalPphId = null;
+                $finalPphBaseAmount = null;
+                $finalPphAmountCalculated = null;
 
-            } else {
-                // 1) Fetch chosen PPH record
-                $pph = InvPph::find($request->pph_id);
-                $pphRate = $pph ? $pph->pph_rate : null;
+                // Only process PPH if pph_id is provided in the request
+                if ($request->filled('pph_id')) {
+                    $pph = InvPph::find($request->pph_id);
 
-                if ($pphRate === null) {
-                    return response()->json([
-                        'message' => 'PPH Rate not found',
-                    ], 404);
+                    if (!$pph || $pph->pph_rate === null) {
+                        return response()->json([
+                            'message' => 'PPH record not found or PPH rate is missing for the provided PPH ID.',
+                        ], 404);
+                    }
+                    $pphRate = $pph->pph_rate;
+                    $finalPphId = $request->pph_id;
+
+                    // Only process pph_base_amount if it's provided (when pph_id is also present)
+                    if ($request->filled('pph_base_amount')) {
+                        $finalPphBaseAmount = (float)$request->pph_base_amount;
+                        $finalPphAmountCalculated = $finalPphBaseAmount + ($finalPphBaseAmount * $pphRate);
+                    } else {
+                        // pph_id was provided, but pph_base_amount was not. Set base and calculated amount to null.
+                        $finalPphBaseAmount = null;
+                        $finalPphAmountCalculated = null;
+                    }
                 }
-
-                // 2) Manually entered pph_base_amount
-                $pphBase = $request->pph_base_amount;
+                // If $request->pph_id was not filled, $finalPphId, $finalPphBaseAmount,
+                // and $finalPphAmountCalculated remain null by their initial declaration.
 
                 // 3) Remove (uncheck) lines from invoice if needed
                 if (is_array($request->inv_line_remove)) {
@@ -252,20 +269,17 @@ class FinanceInvHeaderController extends Controller
                     }
                 }
 
-                // 4) Recalculate pph_amount
-                $pphAmount = $pphBase + ($pphBase * $pphRate);
+                // 5) PPN Amount (tax_amount from InvHeader is PPN-inclusive based on store logic)
+                $ppnInclusiveAmount = $invHeader->tax_amount;
 
-                // 5) Use the existing "tax_amount" column as "ppn_amount"
-                $ppnAmount = $invHeader->tax_amount;
-
-                // 6) total_amount = "ppn_amount minus pph_amount"
-                $totalAmount = $ppnAmount - $pphAmount;
+                // 6) total_amount = "ppn_amount minus pph_amount_effect"
+                $totalAmount = $ppnInclusiveAmount - ($finalPphAmountCalculated ?? 0);
 
                 // 7) Update the InvHeader record
                 $invHeader->update([
-                    'pph_id'          => $request->pph_id,
-                    'pph_base_amount' => $pphBase,
-                    'pph_amount'      => $pphAmount,
+                    'pph_id'          => $finalPphId,
+                    'pph_base_amount' => $finalPphBaseAmount,
+                    'pph_amount'      => $finalPphAmountCalculated,
                     'total_amount'    => $totalAmount,
                     'status'          => $request->status,
                     'plan_date'       => $request->plan_date,
@@ -278,58 +292,40 @@ class FinanceInvHeaderController extends Controller
             switch ($invHeader->status) {
                 case 'Ready To Payment':
                     try {
-                        // Generate receipt number with prefix
                         $today = Carbon::parse($invHeader->updated_at)->format('Y-m-d');
                         $receiptCount = InvHeader::whereDate('updated_at', $today)
                             ->where('status', 'Ready To Payment')
                             ->count();
                         $receiptNumber = 'SANOH' . Carbon::parse($invHeader->updated_at)->format('Ymd') . '/' . ($receiptCount + 1);
 
-                        // Get partner address
                         $partner = Partner::where('bp_code', $invHeader->bp_code)->select("adr_line_1")->first();
-
-                        // Get PO numbers from inv_lines
                         $poNumbers = InvLine::where('inv_supplier_no', $inv_no)
                             ->pluck('po_no')
                             ->unique()
                             ->implode(', ');
 
-                        // Calculate tax amount (VAT, 11% of total_dpp)
-                        $taxAmount = $invHeader->total_dpp * 0.11;
+                        $taxAmountForPdf = $invHeader->total_dpp * 0.11;
 
-                        // Get PPh base amount from the model
-                        $pphBaseAmount = $invHeader->pph_base_amount;
+                        $pdfPphBaseAmount = $invHeader->pph_base_amount;
+                        $pdfPphAmount = $invHeader->pph_amount;
 
-                        // Calculate PPh amount (pph_base_amount * pph_rate)
-                        $pphRate = $invHeader->invPph->pph_rate ?? 0;
-                        $pphAmount = $pphBaseAmount * $pphRate;
-
-                        // Generate PDF
                         $pdf = PDF::loadView('printreceipt', [
                             'invHeader'       => $invHeader,
                             'partner_address' => $partner->adr_line_1 ?? '',
                             'po_numbers'      => $poNumbers,
-                            'tax_amount'      => $taxAmount,
-                            'pph_base_amount' => $pphBaseAmount,
-                            'pph_amount'      => $pphAmount,
+                            'tax_amount'      => $taxAmountForPdf,
+                            'pph_base_amount' => $pdfPphBaseAmount,
+                            'pph_amount'      => $pdfPphAmount,
                         ]);
 
-                        // Define the storage path
                         $filepath = storage_path("app/public/receipts/RECEIPT_{$inv_no}.pdf");
-
-                        // Ensure directory exists
                         if (!file_exists(dirname($filepath))) {
                             mkdir(dirname($filepath), 0777, true);
                         }
-
-                        // Save the PDF
                         $pdf->save($filepath);
 
-                        // Send email with attachment
                         $supplierUser = User::where('bp_code', $invHeader->bp_code)->first();
-
                         if ($supplierUser && $supplierUser->email) {
-                            // Send email with attachment to the supplier
                             Mail::to($supplierUser->email)->send(new InvoiceReadyMail([
                                 'partner_address' => $partner->adr_line_1 ?? '',
                                 'bp_code'         => $invHeader->bp_code,
@@ -341,7 +337,6 @@ class FinanceInvHeaderController extends Controller
                             ]));
                         }
 
-                        // Update invoice with receipt path and number
                         $invHeader->update([
                             'receipt_path'   => "receipts/RECEIPT_{$inv_no}.pdf",
                             'receipt_number' => $receiptNumber

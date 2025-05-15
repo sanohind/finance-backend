@@ -24,8 +24,8 @@ class FinanceInvHeaderUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'pph_id'           => 'required_if:status,Ready To Payment|exists:inv_pph,pph_id',
-            'pph_base_amount'  => 'required_if:status,Ready To Payment|numeric',
+            'pph_id'           => 'nullable|integer|exists:inv_pph,pph_id',
+            'pph_base_amount'  => 'nullable|numeric',
             'inv_line_remove'  => 'nullable|array',
             'inv_line_remove.*'=> 'exists:inv_line,inv_line_id',
             'status'           => 'required|string|max:50|in:Ready To Payment,Rejected',
@@ -40,6 +40,7 @@ class FinanceInvHeaderUpdateRequest extends FormRequest
         return [
             'pph_id.required'             => 'The pph_id field is required.',
             'pph_id.exists'               => 'The selected pph_id doesn’t exist.',
+            'pph_id.integer'              => 'The pph_id must be an integer.',
             'pph_base_amount.required'    => 'The pph_base_amount field is required.',
             'pph_base_amount.numeric'     => 'The pph_base_amount must be numeric.',
             'inv_line_remove.array'       => 'The inv_line_remove must be an array.',
