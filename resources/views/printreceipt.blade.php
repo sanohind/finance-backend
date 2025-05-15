@@ -15,12 +15,12 @@
             font-family: 'Poppins', sans-serif;
             background-color: #fff;
             margin: 0;
-            padding: 10px; /* Reduced padding */
-            font-size: 11px; /* Slightly reduced font size */
+            padding: 15px;
+            font-size: 12px; /* Slightly reduced font size */
         }
 
         .content-wrapper {
-            min-height: 100vh; /* Use min-height to allow content to define height */
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
@@ -28,8 +28,8 @@
         .container {
             margin: 0 auto;
             width: 100%;
-            max-width: 480px; /* Max width for A5, adjust as needed */
-            padding: 10px; /* Reduced padding */
+            max-width: 480px;
+            padding: 15px;
             background-color: #fff;
             flex: 1;
             display: flex;
@@ -41,27 +41,27 @@
         }
 
         .bottom-section {
-            margin-top: auto; /* Pushes to bottom if content is short */
-            padding-top: 15px; /* Reduced padding */
+            margin-top: auto;
+            padding-top: 30px;
         }
 
         .header-title {
-            font-size: 15px; /* Reduced size */
+            font-size: 16px; /* Reduced size */
             font-weight: bold;
-            margin-bottom: 5px; /* Reduced margin */
+            margin-bottom: 8px;
             text-align: center;
         }
 
         .header-title2 {
-            font-size: 13px; /* Reduced size */
+            font-size: 14px; /* Reduced size */
             font-weight: bold;
-            margin-bottom: 5px; /* Reduced margin */
+            margin-bottom: 8px;
             text-align: center;
         }
 
         .logo {
-            width: 70px; /* Smaller logo */
-            margin-bottom: 5px; /* Reduced margin */
+            width: 80px; /* Smaller logo */
+            margin-bottom: 8px;
             display: block;
             margin-left: auto;
             margin-right: auto;
@@ -71,87 +71,85 @@
         .row {
             display: table;
             width: 100%;
-            margin-bottom: 1px; /* Reduced margin */
-            line-height: 1.3; /* Reduced line-height */
+            margin-bottom: 3px;
+            line-height: 1.5; /* Adds vertical spacing within the row */
         }
 
         .label {
             display: table-cell;
-            font-size: 11px; /* Adjusted font size */
+            font-size: 12px;
             width: 35%;
             font-weight: bold;
             text-align: left;
             padding-right: 5px;
-            padding-bottom: 2px; /* Reduced padding bottom */
-            vertical-align: top;
+            padding-bottom: 5px; /* Added padding bottom */
+            vertical-align: top; /* Aligns text to top */
         }
 
         .value {
             display: table-cell;
-            font-size: 11px; /* Adjusted font size */
+            font-size: 12px;
             text-align: right;
             width: 65%;
             padding-left: 5px;
-            padding-bottom: 2px; /* Reduced padding bottom */
+            padding-bottom: 5px; /* Added padding bottom */
             word-wrap: break-word;
-            vertical-align: top;
+            vertical-align: top; /* Aligns text to top */
         }
 
         /* Modified currency rows */
         .row-with-currency {
             display: table;
             width: 100%;
-            margin-bottom: 4px; /* Reduced margin */
-            line-height: 1.3; /* Reduced line-height */
+            margin-bottom: 10px;
+            line-height: 1.5;
         }
 
         .row-with-currency .label {
             display: table-cell;
             width: 35%;
-            font-size: 11px; /* Adjusted font size */
         }
 
         .row-with-currency .currency {
             display: table-cell;
             width: 10%;
-            font-size: 11px; /* Adjusted font size */
+            font-size: 12px;
             text-align: center;
         }
 
         .row-with-currency .value {
             display: table-cell;
             width: 55%;
-            font-size: 11px; /* Adjusted font size */
         }
 
         .divider {
             border-bottom: 1px solid #000;
-            margin: 5px 0; /* Reduced margin */
+            margin: 0 0 4px 0; /* Adjusted top margin to 0 */
         }
 
         .footer {
-            font-size: 9px; /* Reduced font size */
-            margin-top: 10px; /* Reduced margin */
+            font-size: 10px;
+            margin-top: 15px;
             text-align: center;
             font-style: italic;
             color: #888;
         }
 
         .signature-section {
-            margin-top: 10px; /* Reduced margin */
+            margin-top: 20px;
             text-align: left;
         }
 
         .signature-text {
-            font-size: 11px; /* Adjusted font size */
-            margin-bottom: 2px; /* Reduced margin */
+            font-size: 12px;
+            margin-bottom: 4px;
         }
 
         .signature-blank {
-            width: 120px; /* Reduced width */
-            height: 40px; /* Reduced height */
-            margin-bottom: 2px; /* Reduced margin */
-            margin-top: 4px; /* Reduced margin */
+            width: 150px; /* Reduced width */
+            height: 80px; /* Reduced height */
+            margin-bottom: 4px;
+            margin-top: 8px;
         }
     </style>
 </head>
