@@ -398,22 +398,35 @@ class FinanceInvHeaderController extends Controller
         ]);
     }
 
-    public function revertToReadyToPayment(Request $request, $inv_no)
+    public function revertToReadyToPayment(Request $request)
     {
-        $invHeader = InvHeader::where('inv_no', $inv_no)
+        $invNos = $request->input('inv_nos', []);
+
+        if (empty($invNos)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No invoice numbers provided.',
+            ], 400);
+        }
+
+        $updatedCount = InvHeader::whereIn('inv_no', $invNos)
             ->where('status', 'Paid')
-            ->firstOrFail();
+            ->update([
+                'status'      => 'Ready To Payment',
+                'updated_by'  => Auth::user()->name,
+                'actual_date' => null,
+            ]);
 
-        // Update invoice status to Ready To Payment and nullify actual_date
-        $invHeader->update([
-            'status'      => 'Ready To Payment',
-            'updated_by'  => Auth::user()->name,
-            'actual_date' => null,
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => "Invoice {$inv_no} status reverted to Ready To Payment",
-        ]);
+        if ($updatedCount > 0) {
+            return response()->json([
+                'success' => true,
+                'message' => "{$updatedCount} invoice(s) status reverted to Ready To Payment.",
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'No invoices found with "Paid" status matching the provided numbers, or no updates were necessary.',
+            ], 404);
+        }
     }
 }
