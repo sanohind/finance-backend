@@ -1,20 +1,27 @@
 <?php
 
-namespace App\Http\Controllers\Api\Local2;
+namespace Database\Seeders;
 
-use App\Http\Controllers\Controller;
 use App\Models\ERP\InvReceipt;
 use App\Models\InvLine;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB; // DB facade might not be strictly needed if using Eloquent only
+use Carbon\Carbon;
 
-class InvoiceReceiptController extends Controller
+class InvLineSeeder extends Seeder
 {
-    public function copyInvLines()
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
     {
+        $this->command->info('Starting InvLineSeeder...');
+
         try {
-            // Get all data from SQL Server, from March 2025 onwards
-            $currentYear = 2025;
+            // Get data from InvReceipt (similar to original controller logic)
+            // Fetch for the year 2025 and from March onwards.
+            $currentYear = 2025; // Or Carbon::now()->year if you want it to be dynamic in the future
             $startMonth = 3; // March
 
             $sqlsrvData = InvReceipt::whereYear('actual_receipt_date', $currentYear)
@@ -22,7 +29,14 @@ class InvoiceReceiptController extends Controller
                                     ->orderByDesc('actual_receipt_date')
                                     ->get();
 
-            // Copy all data to local database
+            $this->command->info('Fetched ' . $sqlsrvData->count() . ' records from InvReceipt for year ' . $currentYear . ', from month ' . $startMonth . ' onwards.');
+
+            if ($sqlsrvData->isEmpty()) {
+                $this->command->info('No data to seed into inv_lines table.');
+                return;
+            }
+
+            // Copy data to local inv_lines table
             foreach ($sqlsrvData as $data) {
                 InvLine::updateOrCreate(
                     [
@@ -31,7 +45,6 @@ class InvoiceReceiptController extends Controller
                         'receipt_line' => $data->receipt_line
                     ],
                     [
-                        'po_no' => $data->po_no,
                         'bp_id' => $data->bp_id,
                         'bp_name' => $data->bp_name,
                         'currency' => $data->currency,
@@ -43,8 +56,8 @@ class InvoiceReceiptController extends Controller
                         'actual_receipt_date' => $data->actual_receipt_date,
                         'actual_receipt_year' => $data->actual_receipt_year,
                         'actual_receipt_period' => $data->actual_receipt_period,
-                        'receipt_no' => $data->receipt_no,
-                        'receipt_line' => $data->receipt_line,
+                        // 'receipt_no' => $data->receipt_no, // Already in key for updateOrCreate
+                        // 'receipt_line' => $data->receipt_line, // Already in key for updateOrCreate
                         'gr_no' => $data->gr_no,
                         'packing_slip' => $data->packing_slip,
                         'item_no' => $data->item_no,
@@ -70,20 +83,18 @@ class InvoiceReceiptController extends Controller
                         'inv_supplier_no' => $data->inv_supplier_no,
                         'inv_due_date' => $data->inv_due_date,
                         'payment_doc' => $data->payment_doc,
-                        'payment_doc_date' => $data->payment_doc_date
+                        'payment_doc_date' => $data->payment_doc_date,
+                        // Timestamps will be handled by Eloquent automatically if $timestamps = true in InvLine model
+                        // 'created_at' => Carbon::now(),
+                        // 'updated_at' => Carbon::now(),
                     ]
                 );
             }
 
-            return response()->json([
-                'message' => 'Data inv_line successfully copied for year ' . $currentYear . ' from month ' . $startMonth . ' onwards.',
-                'count' => count($sqlsrvData)
-            ]);
+            $this->command->info('InvLineSeeder successfully copied/updated ' . count($sqlsrvData) . ' records.');
 
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error copying data: ' . $e->getMessage()
-            ], 500);
+            $this->command->error('Error in InvLineSeeder: ' . $e->getMessage());
         }
     }
 }
