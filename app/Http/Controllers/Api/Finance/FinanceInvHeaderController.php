@@ -409,8 +409,10 @@ class FinanceInvHeaderController extends Controller
             ], 400);
         }
 
+        // Target invoices that have an actual_date to revert them
         $updatedCount = InvHeader::whereIn('inv_no', $invNos)
-            ->where('status', 'Paid')
+            ->where('status', 'Paid') // Added condition for status
+            ->whereNotNull('actual_date')
             ->update([
                 'status'      => 'Ready To Payment',
                 'updated_by'  => Auth::user()->name,
@@ -420,12 +422,12 @@ class FinanceInvHeaderController extends Controller
         if ($updatedCount > 0) {
             return response()->json([
                 'success' => true,
-                'message' => "{$updatedCount} invoice(s) status reverted to Ready To Payment.",
+                'message' => "{$updatedCount} invoice(s) status reverted to Ready To Payment (actual_date nullified).",
             ]);
         } else {
             return response()->json([
                 'success' => false,
-                'message' => 'No invoices found with "Paid" status matching the provided numbers, or no updates were necessary.',
+                'message' => 'No invoices found with "Paid" status and an actual payment date to revert, or no updates were necessary for the provided invoice numbers.',
             ], 404);
         }
     }
