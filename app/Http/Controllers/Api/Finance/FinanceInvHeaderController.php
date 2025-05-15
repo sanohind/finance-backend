@@ -409,20 +409,27 @@ class FinanceInvHeaderController extends Controller
             ], 400);
         }
 
-        // Target invoices that have an actual_date to revert them
-        $updatedCount = InvHeader::whereIn('inv_no', $invNos)
-            ->where('status', 'Paid') // Added condition for status
+        // Fetch all relevant InvHeaders first to preserve their plan_date
+        $invHeaders = InvHeader::whereIn('inv_no', $invNos)
+            ->where('status', 'Paid')
             ->whereNotNull('actual_date')
-            ->update([
+            ->get();
+
+        $updatedCount = 0;
+        foreach ($invHeaders as $invHeader) {
+            $invHeader->update([
                 'status'      => 'Ready To Payment',
                 'updated_by'  => Auth::user()->name,
                 'actual_date' => null,
+                'plan_date'   => $invHeader->plan_date, // keep current value
             ]);
+            $updatedCount++;
+        }
 
         if ($updatedCount > 0) {
             return response()->json([
                 'success' => true,
-                'message' => "{$updatedCount} invoice(s) status reverted to Ready To Payment (actual_date nullified).",
+                'message' => "$updatedCount invoice(s) status reverted to Ready To Payment (plan_date preserved).",
             ]);
         } else {
             return response()->json([
