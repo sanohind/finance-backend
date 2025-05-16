@@ -399,7 +399,7 @@ class FinanceInvHeaderController extends Controller
         ]);
     }
 
-    public function revertToReadyToPayment(FinanceRevertRequest $request)
+    public function revertInvoice(FinanceRevertRequest $request)
     {
         $validatedData = $request->validated();
         $invNos = $validatedData['inv_nos'];
