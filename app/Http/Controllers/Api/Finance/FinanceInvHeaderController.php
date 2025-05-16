@@ -399,35 +399,22 @@ class FinanceInvHeaderController extends Controller
         ]);
     }
 
-    public function revertInvoice($inv_no)
+    public function revertToReadyToPayment(Request $request, $inv_no)
     {
-        // $request->validated(); // No specific data to validate from request body for this operation
-        $updatedCount = 0;
+        $invHeader = InvHeader::where('inv_no', $inv_no)
+            ->where('status', 'Paid')
+            ->firstOrFail();
 
-        DB::transaction(function () use ($inv_no, &$updatedCount) {
-            // Perform an update for the specific invoice and get the count of affected rows
-            $updatedCount = InvHeader::where('inv_no', $inv_no)
-                ->where('status', 'Paid')
-                ->whereNotNull('actual_date')
-                ->update([
-                    'status'      => 'Ready To Payment',
-                    'updated_by'  => Auth::user()->name,
-                    'actual_date' => null,
-                    // Eloquent's mass update automatically handles 'updated_at' timestamps
-                ]);
-        });
+        // Update invoice status to Ready To Payment and nullify actual_date
+        $invHeader->update([
+            'status'      => 'Ready To Payment',
+            'updated_by'  => Auth::user()->name,
+            'actual_date' => null,
+        ]);
 
-        if ($updatedCount > 0) {
-            return response()->json([
-                'success' => true,
-                'message' => "Invoice {$inv_no} status reverted to Ready To Payment.",
-            ]);
-        } else {
-            // This means the invoice did not match the criteria or no changes were made.
-            return response()->json([
-                'success' => false,
-                'message' => "Invoice {$inv_no} not found with 'Paid' status and an actual payment date, or no changes were needed.",
-            ], 404); // 404 indicates that the specific invoice was not found/affected.
-        }
+        return response()->json([
+            'success' => true,
+            'message' => "Invoice {$inv_no} status reverted to Ready To Payment",
+        ]);
     }
 }
