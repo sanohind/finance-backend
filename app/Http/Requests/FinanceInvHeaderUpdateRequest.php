@@ -24,8 +24,8 @@ class FinanceInvHeaderUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'pph_id'           => 'required_if:status,Ready To Payment|exists:inv_pph,pph_id',
-            'pph_base_amount'  => 'required_if:status,Ready To Payment|numeric',
+            'pph_id'           => 'required|exists:inv_pph,pph_id',
+            'pph_base_amount'  => 'required|numeric',
             'inv_line_remove'  => 'nullable|array',
             'inv_line_remove.*'=> 'exists:inv_line,inv_line_id',
             'status'           => 'required|string|max:50|in:Ready To Payment,Rejected',
