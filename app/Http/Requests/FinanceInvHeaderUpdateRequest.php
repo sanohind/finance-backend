@@ -24,12 +24,12 @@ class FinanceInvHeaderUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'pph_id'           => 'nullable|integer|exists:inv_pph,pph_id',
-            'pph_base_amount'  => 'nullable|numeric',
+            'pph_id'           => 'required_if:status,Ready To Payment|exists:inv_pph,pph_id',
+            'pph_base_amount'  => 'required_if:status,Ready To Payment|numeric',
             'inv_line_remove'  => 'nullable|array',
             'inv_line_remove.*'=> 'exists:inv_line,inv_line_id',
             'status'           => 'required|string|max:50|in:Ready To Payment,Rejected',
-            'plan_date'        => 'required_if:status,Ready To Payment|date',
+            'plan_date'        => 'required|date', // Changed from required_if
             'reason'           => 'required_if:status,Rejected',
             'updated_by'       => 'nullable|string|max:100',
         ];
@@ -40,7 +40,6 @@ class FinanceInvHeaderUpdateRequest extends FormRequest
         return [
             'pph_id.required'             => 'The pph_id field is required.',
             'pph_id.exists'               => 'The selected pph_id doesn’t exist.',
-            'pph_id.integer'              => 'The pph_id must be an integer.',
             'pph_base_amount.required'    => 'The pph_base_amount field is required.',
             'pph_base_amount.numeric'     => 'The pph_base_amount must be numeric.',
             'inv_line_remove.array'       => 'The inv_line_remove must be an array.',
@@ -49,6 +48,8 @@ class FinanceInvHeaderUpdateRequest extends FormRequest
             'status.string'               => 'The status must be a string.',
             'status.max'                  => 'The status may not be greater than 50 characters.',
             'status.in'                   => 'The status must be either Ready To Payment or Rejected.',
+            'plan_date.required'          => 'The plan date field is required.', // Added message
+            'plan_date.date'              => 'The plan date must be a valid date.', // Added message
             'reason.string'               => 'The reason must be a string.',
             'reason.max'                  => 'The reason may not be greater than 255 characters.',
             'updated_by.string'           => 'The updated_by field must be a string.',
