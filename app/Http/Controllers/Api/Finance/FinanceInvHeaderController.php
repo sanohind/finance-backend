@@ -403,25 +403,10 @@ class FinanceInvHeaderController extends Controller
     {
         $validatedData = $request->validated();
         $invNos = $validatedData['inv_nos'];
-
-        // First, check if there are any invoices that match the criteria to be reverted.
-        // This helps in returning a more accurate "not found" message.
-        $matchingInvoicesCount = InvHeader::whereIn('inv_no', $invNos)
-            ->where('status', 'Paid')
-            ->whereNotNull('actual_date')
-            ->count();
-
-        if ($matchingInvoicesCount === 0) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No invoices found with "Paid" status and an actual payment date to revert for the provided invoice numbers.',
-            ], 404);
-        }
-
         $updatedCount = 0;
 
         DB::transaction(function () use ($invNos, &$updatedCount) {
-            // Perform a bulk update
+            // Perform a bulk update and get the count of affected rows
             $updatedCount = InvHeader::whereIn('inv_no', $invNos)
                 ->where('status', 'Paid')
                 ->whereNotNull('actual_date')
@@ -439,13 +424,11 @@ class FinanceInvHeaderController extends Controller
                 'message' => "{$updatedCount} invoice(s) status reverted to Ready To Payment.",
             ]);
         } else {
-            // This case implies that invoices matched the criteria (checked by $matchingInvoicesCount),
-            // but no rows were actually changed by the update statement.
-            // This could happen due to concurrent modifications or other unexpected database states.
+            // This means no invoices matched the criteria or no changes were made.
             return response()->json([
                 'success' => false,
-                'message' => 'Invoices matched criteria, but no records were updated. Please check the current status of the invoices or try again.',
-            ], 409); // 409 Conflict or another appropriate status code
+                'message' => 'No invoices found with "Paid" status and an actual payment date to revert, or no changes were needed for the provided invoice numbers.',
+            ], 404); // 404 indicates that no suitable invoices were found/affected.
         }
     }
 }
