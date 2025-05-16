@@ -403,53 +403,49 @@ class FinanceInvHeaderController extends Controller
     {
         $validatedData = $request->validated();
         $invNos = $validatedData['inv_nos'];
-        $updatedCount = 0;
 
-        // Fetch invoices that are 'Paid' and have an actual_date
-        $invoicesToRevert = InvHeader::whereIn('inv_no', $invNos)
+        // First, check if there are any invoices that match the criteria to be reverted.
+        // This helps in returning a more accurate "not found" message.
+        $matchingInvoicesCount = InvHeader::whereIn('inv_no', $invNos)
             ->where('status', 'Paid')
             ->whereNotNull('actual_date')
-            ->get();
+            ->count();
 
-        if ($invoicesToRevert->isEmpty()) {
+        if ($matchingInvoicesCount === 0) {
             return response()->json([
                 'success' => false,
                 'message' => 'No invoices found with "Paid" status and an actual payment date to revert for the provided invoice numbers.',
             ], 404);
         }
 
-        DB::transaction(function () use ($invoicesToRevert, &$updatedCount) {
-            $currentDate = Carbon::now(); // Use fully qualified name or ensure Carbon is imported
-            foreach ($invoicesToRevert as $invoice) {
-                $updateData = [
+        $updatedCount = 0;
+
+        DB::transaction(function () use ($invNos, &$updatedCount) {
+            // Perform a bulk update
+            $updatedCount = InvHeader::whereIn('inv_no', $invNos)
+                ->where('status', 'Paid')
+                ->whereNotNull('actual_date')
+                ->update([
                     'status'      => 'Ready To Payment',
                     'updated_by'  => Auth::user()->name,
                     'actual_date' => null,
-                ];
-
-                // If plan_date is currently null, set it to the last day of the current month.
-                // Otherwise, its existing value will be preserved.
-                if (is_null($invoice->plan_date)) {
-                    $updateData['plan_date'] = $currentDate->copy()->endOfMonth();
-                }
-
-                $invoice->update($updateData);
-                $updatedCount++;
-            }
+                    // Eloquent's mass update automatically handles 'updated_at' timestamps
+                ]);
         });
 
         if ($updatedCount > 0) {
             return response()->json([
                 'success' => true,
-                'message' => "{$updatedCount} invoice(s) status reverted to Ready To Payment. Plan date handled.",
+                'message' => "{$updatedCount} invoice(s) status reverted to Ready To Payment.",
             ]);
         } else {
-            // This case should ideally be caught by the isEmpty() check earlier,
-            // but kept for robustness or if transaction fails before any update.
+            // This case implies that invoices matched the criteria (checked by $matchingInvoicesCount),
+            // but no rows were actually changed by the update statement.
+            // This could happen due to concurrent modifications or other unexpected database states.
             return response()->json([
                 'success' => false,
-                'message' => 'No invoices were updated. This might indicate an issue or that no qualifying invoices were found.',
-            ], 404);
+                'message' => 'Invoices matched criteria, but no records were updated. Please check the current status of the invoices or try again.',
+            ], 409); // 409 Conflict or another appropriate status code
         }
     }
 }
