@@ -11,6 +11,7 @@ use App\Models\InvLine;
 use Illuminate\Support\Facades\Mail;
 use App\Http\Requests\FinanceInvHeaderUpdateRequest;
 use App\Http\Requests\FinancePaymentDocumentRequest;
+use App\Http\Requests\FinanceRevertRequest;
 use App\Http\Requests\FinanceInvHeaderStoreRequest;
 use App\Http\Resources\InvHeaderResource;
 use App\Mail\InvoiceReadyMail;
@@ -398,16 +399,10 @@ class FinanceInvHeaderController extends Controller
         ]);
     }
 
-    public function revertToReadyToPayment(Request $request)
+    public function revertToReadyToPayment(FinanceRevertRequest $request)
     {
-        $invNos = $request->input('inv_nos', []);
-
-        if (empty($invNos)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No invoice numbers provided.',
-            ], 400);
-        }
+        $validatedData = $request->validated();
+        $invNos = $validatedData['inv_nos'];
 
         // Target invoices that have an actual_date to revert them
         $updatedCount = InvHeader::whereIn('inv_no', $invNos)
