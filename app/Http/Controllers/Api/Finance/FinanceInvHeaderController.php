@@ -403,26 +403,52 @@ class FinanceInvHeaderController extends Controller
     {
         $validatedData = $request->validated();
         $invNos = $validatedData['inv_nos'];
+        $updatedCount = 0;
 
-        // Target invoices that have an actual_date to revert them
-        $updatedCount = InvHeader::whereIn('inv_no', $invNos)
-            ->where('status', 'Paid') // Added condition for status
+        // Fetch invoices that are 'Paid' and have an actual_date
+        $invoicesToRevert = InvHeader::whereIn('inv_no', $invNos)
+            ->where('status', 'Paid')
             ->whereNotNull('actual_date')
-            ->update([
-                'status'      => 'Ready To Payment',
-                'updated_by'  => Auth::user()->name,
-                'actual_date' => null,
-            ]);
+            ->get();
+
+        if ($invoicesToRevert->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No invoices found with "Paid" status and an actual payment date to revert for the provided invoice numbers.',
+            ], 404);
+        }
+
+        DB::transaction(function () use ($invoicesToRevert, &$updatedCount) {
+            $currentDate = \Carbon\Carbon::now(); // Use fully qualified name or ensure Carbon is imported
+            foreach ($invoicesToRevert as $invoice) {
+                $updateData = [
+                    'status'      => 'Ready To Payment',
+                    'updated_by'  => Auth::user()->name,
+                    'actual_date' => null,
+                ];
+
+                // If plan_date is currently null, set it to the last day of the current month.
+                // Otherwise, its existing value will be preserved.
+                if (is_null($invoice->plan_date)) {
+                    $updateData['plan_date'] = $currentDate->copy()->endOfMonth();
+                }
+
+                $invoice->update($updateData);
+                $updatedCount++;
+            }
+        });
 
         if ($updatedCount > 0) {
             return response()->json([
                 'success' => true,
-                'message' => "{$updatedCount} invoice(s) status reverted to Ready To Payment (actual_date nullified).",
+                'message' => "{$updatedCount} invoice(s) status reverted to Ready To Payment. Plan date handled.",
             ]);
         } else {
+            // This case should ideally be caught by the isEmpty() check earlier,
+            // but kept for robustness or if transaction fails before any update.
             return response()->json([
                 'success' => false,
-                'message' => 'No invoices found with "Paid" status and an actual payment date to revert, or no updates were necessary for the provided invoice numbers.',
+                'message' => 'No invoices were updated. This might indicate an issue or that no qualifying invoices were found.',
             ], 404);
         }
     }
