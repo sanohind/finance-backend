@@ -16,18 +16,14 @@ class FinanceRevertRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'inv_nos' => 'required|array|min:1',
-            'inv_nos.*' => 'string',
+            // No specific rules needed if inv_nos is not expected from the body for this request.
         ];
     }
 
     public function messages(): array
     {
         return [
-            'inv_nos.required' => 'The inv_nos field is required.',
-            'inv_nos.array' => 'The inv_nos field must be an array.',
-            'inv_nos.min' => 'At least one invoice number must be provided.',
-            'inv_nos.*.string' => 'Each invoice number must be a string.',
+            // No specific messages needed if there are no rules.
         ];
     }
 

@@ -399,15 +399,14 @@ class FinanceInvHeaderController extends Controller
         ]);
     }
 
-    public function revertInvoice(FinanceRevertRequest $request)
+    public function revertInvoice($inv_no)
     {
-        $validatedData = $request->validated();
-        $invNos = $validatedData['inv_nos'];
+        // $request->validated(); // No specific data to validate from request body for this operation
         $updatedCount = 0;
 
-        DB::transaction(function () use ($invNos, &$updatedCount) {
-            // Perform a bulk update and get the count of affected rows
-            $updatedCount = InvHeader::whereIn('inv_no', $invNos)
+        DB::transaction(function () use ($inv_no, &$updatedCount) {
+            // Perform an update for the specific invoice and get the count of affected rows
+            $updatedCount = InvHeader::where('inv_no', $inv_no)
                 ->where('status', 'Paid')
                 ->whereNotNull('actual_date')
                 ->update([
@@ -421,14 +420,14 @@ class FinanceInvHeaderController extends Controller
         if ($updatedCount > 0) {
             return response()->json([
                 'success' => true,
-                'message' => "{$updatedCount} invoice(s) status reverted to Ready To Payment.",
+                'message' => "Invoice {$inv_no} status reverted to Ready To Payment.",
             ]);
         } else {
-            // This means no invoices matched the criteria or no changes were made.
+            // This means the invoice did not match the criteria or no changes were made.
             return response()->json([
                 'success' => false,
-                'message' => 'No invoices found with "Paid" status and an actual payment date to revert, or no changes were needed for the provided invoice numbers.',
-            ], 404); // 404 indicates that no suitable invoices were found/affected.
+                'message' => "Invoice {$inv_no} not found with 'Paid' status and an actual payment date, or no changes were needed.",
+            ], 404); // 404 indicates that the specific invoice was not found/affected.
         }
     }
 }
