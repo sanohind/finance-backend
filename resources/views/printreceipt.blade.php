@@ -124,7 +124,7 @@
 
         .divider {
             border-bottom: 1px solid #000;
-            margin: 0 0 4px 0; /* Adjusted top margin to 0 */
+            margin: 0 0 2px 0; /* Adjusted top margin to 0 */
         }
 
         .footer {
