@@ -419,7 +419,7 @@ class FinanceInvHeaderController extends Controller
         }
 
         DB::transaction(function () use ($invoicesToRevert, &$updatedCount) {
-            $currentDate = \Carbon\Carbon::now(); // Use fully qualified name or ensure Carbon is imported
+            $currentDate = Carbon::now(); // Use fully qualified name or ensure Carbon is imported
             foreach ($invoicesToRevert as $invoice) {
                 $updateData = [
                     'status'      => 'Ready To Payment',
