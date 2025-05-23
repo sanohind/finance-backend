@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('news', function (Blueprint $table) {
+        Schema::connection('mysql')->create('news', function (Blueprint $table) {
             $table->id();
             $table->string('title')->nullable();
             $table->string('description')->nullable();

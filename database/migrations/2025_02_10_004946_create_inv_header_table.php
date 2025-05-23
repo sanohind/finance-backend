@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('inv_header', function (Blueprint $table) {
+        Schema::connection('mysql')->create('inv_header', function (Blueprint $table) {
             $table->string('inv_no', 255)->primary();
             $table->string('receipt_number')->nullable();
             $table->string('receipt_path')->nullable();

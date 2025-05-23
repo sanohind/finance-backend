@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('inv_line', function (Blueprint $table) {
+        Schema::connection('mysql')->create('inv_line', function (Blueprint $table) {
             $table->id('inv_line_id');
 
             $table->string('po_no')->nullable();

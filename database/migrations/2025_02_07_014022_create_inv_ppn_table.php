@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('inv_ppn', function (Blueprint $table) {
+        Schema::connection('mysql')->create('inv_ppn', function (Blueprint $table) {
             $table->id('ppn_id');
             $table->string('ppn_description', 255)->nullable();
             $table->decimal('ppn_rate')->nullable();
