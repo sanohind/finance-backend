@@ -21,15 +21,16 @@ class InvLineSeeder extends Seeder
         try {
             // Define the date range
             $startDate = Carbon::create(2025, 3, 1)->startOfDay();
-            $today = Carbon::today()->endOfDay(); // Current date is May 18, 2025
+            // Use a date 2 days before today to ensure we capture data we know exists
+            $endDate = Carbon::today()->subDays(2)->endOfDay(); // 2 days before today
 
             $chunkSize = 2000; // Define chunk size
             $totalProcessed = 0; // Initialize counter for total processed records
 
-            $this->command->info("Fetching records from InvReceipt with actual_receipt_date between {$startDate->toDateTimeString()} and {$today->toDateTimeString()}, in chunks of {$chunkSize}...");
+            $this->command->info("Fetching records from InvReceipt with actual_receipt_date between {$startDate->toDateTimeString()} and {$endDate->toDateTimeString()}, in chunks of {$chunkSize}...");
 
             InvReceipt::where('actual_receipt_date', '>=', $startDate)
-                ->where('actual_receipt_date', '<=', $today)
+                ->where('actual_receipt_date', '<=', $endDate)
                 ->orderByDesc('actual_receipt_date') // Keep existing primary order
                 ->orderBy('po_no', 'asc')            // Add secondary sort for determinism
                 ->orderBy('receipt_no', 'asc')       // Add tertiary sort
