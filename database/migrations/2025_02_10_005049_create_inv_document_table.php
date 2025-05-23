@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('inv_document', function (Blueprint $table) {
+        Schema::connection('mysql')->create('inv_document', function (Blueprint $table) {
             $table->id('inv_doc_id');
 
             // Foreign key to inv_header
