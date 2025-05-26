@@ -86,8 +86,7 @@ Route::middleware(['auth:sanctum', 'userRole:2'])->prefix('finance')->group(func
     Route::put('inv-header/in-process/{inv_no}', [FinanceInvHeaderController::class, 'updateStatusToInProcess']);
     Route::get('inv-header/detail/{inv_no}', [FinanceInvHeaderController::class, 'getInvHeaderDetail']);
     Route::post('inv-header/upload-payment', [FinanceInvHeaderController::class, 'uploadPaymentDocuments']);
-    Route::put('inv-header/revertInvoice/{inv_no}', [FinanceInvHeaderController::class, 'revertToReadyToPayment']);
-    Route::put('inv-header/revertInvoices', [FinanceInvHeaderController::class, 'revertToReadyToPayment']);
+    Route::post('inv-header/revertInvoices', [FinanceInvHeaderController::class, 'revertToReadyToPayment']);
 
     // News
     Route::get('news', [FinanceNewsController::class, 'index']);
