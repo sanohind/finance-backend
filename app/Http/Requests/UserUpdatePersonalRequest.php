@@ -28,7 +28,7 @@ class UserUpdatePersonalRequest extends FormRequest
         return [
             'name'     => 'required|string|max:25',
             'password' => 'nullable|string|min:8',
-            'username' => 'nullable|string|unique:users,username,'.$userId.',user_id|max:25',
+            'username' => 'nullable|string|unique:user,username,'.$userId.',user_id|max:25',
             'email'    => 'required|email|max:255',
         ];
     }
