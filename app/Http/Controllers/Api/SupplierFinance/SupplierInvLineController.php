@@ -29,7 +29,8 @@ class SupplierInvLineController extends Controller
         // Log the query and bindings
         $query = InvLine::where('bp_id', $sp_code)
             ->whereNull('inv_supplier_no')
-            ->whereNull('inv_due_date');
+            ->whereNull('inv_due_date')
+            ->orderBy('actual_receipt_date', 'desc');
 
         Log::info('[SupplierInvLineController] SQL Query: ' . $query->toSql());
         Log::info('[SupplierInvLineController] Bindings: ', $query->getBindings());

@@ -142,8 +142,8 @@ class FinanceInvLineController extends Controller
             $query->where('inv_doc_no', 'like', '%' . $request->query('dn_number') . '%');
         }
 
-        // Execute the query with applied filters
-        $invLines = $query->get();
+        // Execute the query with applied filters and order by newest actual_receipt_date first
+        $invLines = $query->orderBy('actual_receipt_date', 'desc')->get();
 
         // Return the data using your resource collection
         return InvLineResource::collection($invLines);
