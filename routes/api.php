@@ -112,6 +112,10 @@ Route::middleware(['auth:sanctum', 'userRole:2'])->prefix('finance')->group(func
     // Document streaming
     Route::get('files/{folder}/{filename}', [FinanceInvDocumentController::class, 'streamFile']);
 
+    // User profile management
+    Route::get('edit/profile', [UserController::class, 'profile']);
+    Route::put('update/profile', [UserController::class, 'updatePersonal']);
+
     Route::post('logout', [AuthController::class, 'logout']);
 });
 
@@ -142,6 +146,10 @@ Route::middleware(['auth:sanctum', 'userRole:3'])->prefix('supplier-finance')->g
     Route::get('inv-line/{inv_no}', [SupplierInvLineController::class, 'getInvLine']);
     Route::get('inv-line/outstanding', [SupplierInvLineController::class, 'getOutstandingInvLine']);
     Route::get('inv-line/supinvoice', [SupplierInvLineController::class, 'getUninvoicedInvLineTransaction']);
+
+    // User profile management
+    Route::get('edit/profile', [UserController::class, 'profile']);
+    Route::put('update/profile', [UserController::class, 'updatePersonal']);
 
     Route::post('logout', [AuthController::class, 'logout']);
 });

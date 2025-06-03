@@ -8,8 +8,10 @@ use App\Models\User;
 use App\Models\Local\Partner;
 use App\Http\Requests\UserStoreRequest;
 use App\Http\Requests\UserUpdateRequest;
+use App\Http\Requests\UserUpdatePersonalRequest;
 use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
@@ -50,6 +52,19 @@ class UserController extends Controller
         return new UserResource($user);
     }
 
+    // Get authenticated user profile data
+    public function profile()
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json(['message' => 'User not authenticated'], 401);
+        }
+
+        return new UserResource($user);
+    }
+
     // Update all data
     public function update(UserUpdateRequest $request, $id)
     {
@@ -67,6 +82,38 @@ class UserController extends Controller
         ]);
 
         return response()->json(['message' => 'User updated']);
+    }
+
+    // Update user personal data
+    public function updatePersonal(UserUpdatePersonalRequest $request)
+    {
+        $request->validated();
+
+        /** @var User $user */
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json(['message' => 'User not authenticated'], 401);
+        }
+
+        // Update all personal data fields
+        $updateData = [
+            'name' => $request->name ?? $user->name,
+            'username' => $request->username ?? $user->username,
+            'email' => $request->email ?? $user->email,
+        ];
+
+        // Only update password if provided
+        if ($request->filled('password')) {
+            $updateData['password'] = Hash::make($request->password);
+        }
+
+        $user->update($updateData);
+
+        return response()->json([
+            'message' => 'Personal data updated successfully',
+            'user' => new UserResource($user)
+        ]);
     }
 
     // Delete account
