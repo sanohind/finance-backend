@@ -5,9 +5,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\Admin\UserController;
 use App\Http\Controllers\Api\Admin\SuperAdminDashboardController;
-use App\Http\Controllers\Api\Admin\SuperAdminInvHeaderController;
-use App\Http\Controllers\Api\Admin\SuperAdminInvLineController;
-use App\Http\Controllers\Api\Admin\SuperAdminInvDocumentController;
 use App\Http\Controllers\Api\Finance\FinanceDashboardController;
 use App\Http\Controllers\Api\Finance\FinanceInvHeaderController;
 use App\Http\Controllers\Api\Finance\FinanceInvLineController;
@@ -47,25 +44,6 @@ Route::middleware(['auth:sanctum', 'userRole:1'])->prefix('super-admin')->group(
     Route::put('update/{id}', [UserController::class, 'update']);
     Route::delete('delete/{id}', [UserController::class, 'destroy']);
     Route::patch('status/{id}', [UserController::class, 'updateStatus']);
-
-    // Invoice management
-    Route::get('inv-header', [SuperAdminInvHeaderController::class, 'getInvHeader']);
-    Route::get('inv-header/bp-code/{bp_code}', [SuperAdminInvHeaderController::class, 'getInvHeaderByBpCode']);
-    Route::post('inv-header/store', [SuperAdminInvHeaderController::class, 'store']);
-    Route::put('inv-header/{inv_no}', [SuperAdminInvHeaderController::class, 'update']);
-    Route::put('inv-header/in-process/{inv_no}', [SuperAdminInvHeaderController::class, 'updateStatusToInProcess']);
-    Route::get('inv-header/detail/{inv_no}', [SuperAdminInvHeaderController::class, 'getInvHeaderDetail']);
-    Route::post('inv-header/upload-payment/{inv_no}', [SuperAdminInvHeaderController::class, 'uploadPaymentDocument']);
-    Route::get('pph', [SuperAdminInvHeaderController::class, 'getPph']);
-    Route::get('ppn', [SuperAdminInvHeaderController::class, 'getPpn']);
-
-    // Invoice lines
-    Route::get('inv-line/{bp_code}', [SuperAdminInvLineController::class, 'getInvLineTransaction']);
-    Route::get('inv-line/{inv_no}', [SuperAdminInvLineController::class, 'getInvLine']);
-    Route::get('inv-line/outstanding/{bp_code}', [SuperAdminInvLineController::class, 'getOutstandingInvLine']);
-
-    // Document streaming
-    // Route::get('files/{folder}/{filename}', [SuperAdminInvDocumentController::class, 'streamFile']);
 
     Route::post('logout', [AuthController::class, 'logout']);
 });
