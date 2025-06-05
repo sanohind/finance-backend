@@ -23,13 +23,15 @@ class UserUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
+        $userId = $this->route('id'); // Get the user ID from the route parameter
+
         return [
-            'bp_code' => 'required|string|max:25',
-            'name' => 'required|string|max:25',
-            'role' => 'required|string|max:25',
+            'bp_code' => 'nullable|string|max:25',
+            'name' => 'nullable|string|max:25',
+            'role' => 'nullable|string|max:25',
             'password' => 'nullable|string|min:8',
-            'username' => 'nullable|string|unique:user,username|max:25', // username must unique
-            'email.*' => 'email|max:255'
+            'username' => 'nullable|string|max:25|unique:user,username,' . $userId . ',user_id',
+            'email' => 'nullable|email|max:255'
         ];
     }
 
@@ -41,13 +43,10 @@ class UserUpdateRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'supplier_code.required' => 'The BP code is required.',
-            'supplier_code.string' => 'The BP code must be a string.',
-            'supplier_code.max' => 'The BP code may not be greater than 25 characters.',
-            'name.required' => 'The name is required.',
+            'bp_code.string' => 'The BP code must be a string.',
+            'bp_code.max' => 'The BP code may not be greater than 25 characters.',
             'name.string' => 'The name must be a string.',
             'name.max' => 'The name may not be greater than 25 characters.',
-            'role.required' => 'The role is required.',
             'role.string' => 'The role must be a string.',
             'role.max' => 'The role may not be greater than 25 characters.',
             'password.string' => 'The password must be a string.',
@@ -55,8 +54,8 @@ class UserUpdateRequest extends FormRequest
             'username.string' => 'The username must be a string.',
             'username.unique' => 'The username has already been taken.',
             'username.max' => 'The username may not be greater than 25 characters.',
-            'email.*.email' => 'Each email must be a valid email address.',
-            'email.*.max' => 'Each email may not be greater than 255 characters.',
+            'email.email' => 'The email must be a valid email address.',
+            'email.max' => 'The email may not be greater than 255 characters.',
         ];
     }
 

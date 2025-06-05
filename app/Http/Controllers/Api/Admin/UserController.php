@@ -72,14 +72,21 @@ class UserController extends Controller
 
         $user = User::where('user_id', $id)->first();
 
-        $user->update([
+        // Prepare update data
+        $updateData = [
             'bp_code' => $request->bp_code ?? $user->bp_code,
             'name' => $request->name ?? $user->name,
             'role' => $request->role ?? $user->role,
             'username' => $request->username ?? $user->username,
-            'password' => Hash::make($request->password) ?? $user->password,
             'email' => $request->email ?? $user->email,
-        ]);
+        ];
+
+        // Only update password if provided
+        if ($request->filled('password')) {
+            $updateData['password'] = Hash::make($request->password);
+        }
+
+        $user->update($updateData);
 
         return response()->json(['message' => 'User updated']);
     }
