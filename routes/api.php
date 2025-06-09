@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\Admin\UserController;
 use App\Http\Controllers\Api\Admin\SuperAdminDashboardController;
+use App\Http\Controllers\Api\Admin\SuperAdminInvDocumentController;
 use App\Http\Controllers\Api\Finance\FinanceDashboardController;
 use App\Http\Controllers\Api\Finance\FinanceInvHeaderController;
 use App\Http\Controllers\Api\Finance\FinanceInvLineController;
@@ -44,6 +45,9 @@ Route::middleware(['auth:sanctum', 'userRole:1'])->prefix('super-admin')->group(
     Route::put('update/{id}', [UserController::class, 'update']);
     Route::delete('delete/{id}', [UserController::class, 'destroy']);
     Route::patch('status/{id}', [UserController::class, 'updateStatus']);
+
+    // Document streaming
+    // Route::get('files/{folder}/{filename}', [SuperAdminInvDocumentController::class, 'streamFile']);
 
     Route::post('logout', [AuthController::class, 'logout']);
 });
