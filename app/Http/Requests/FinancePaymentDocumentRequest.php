@@ -16,6 +16,8 @@ class FinancePaymentDocumentRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'inv_ids'     => 'required|array',
+            'inv_ids.*'   => 'exists:inv_header,inv_id',
             'actual_date' => 'required|date',
         ];
     }
@@ -23,6 +25,9 @@ class FinancePaymentDocumentRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'inv_ids.required'     => 'The inv_ids field is required.',
+            'inv_ids.array'        => 'The inv_ids must be an array.',
+            'inv_ids.*.exists'     => 'One or more invoice IDs do not exist.',
             'actual_date.required' => 'The actual_date field is required.',
             'actual_date.date'     => 'The actual_date must be a valid date.',
         ];

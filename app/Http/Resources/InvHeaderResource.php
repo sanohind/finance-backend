@@ -15,6 +15,7 @@ class InvHeaderResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            'inv_id'            => $this->inv_id,
             'inv_no'            => $this->inv_no,
             'bp_code'           => $this->bp_code,
             'plan_date'         => $this->plan_date,

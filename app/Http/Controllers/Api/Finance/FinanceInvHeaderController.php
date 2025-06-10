@@ -28,8 +28,17 @@ class FinanceInvHeaderController extends Controller
 {
     public function getInvHeader()
     {
-        // Eager load the invLine relationship for all invoice headers
-        $invHeaders = InvHeader::with('invLine')->orderBy('created_at', 'desc')->get();
+        // Load invoice headers first without invLine relationship
+        $invHeaders = InvHeader::orderBy('created_at', 'desc')->get();
+
+        // Apply the same filtering condition for invLine relationship for each header
+        foreach ($invHeaders as $invHeader) {
+            $invHeader->load(['invLine' => function ($query) use ($invHeader) {
+                $query->where('bp_id', $invHeader->bp_code)
+                      ->where('inv_due_date', $invHeader->inv_date);
+            }]);
+        }
+
         return InvHeaderResource::collection($invHeaders);
     }
 
@@ -51,18 +60,18 @@ class FinanceInvHeaderController extends Controller
         return response()->json($ppn);
     }
 
-    public function getInvHeaderDetail($inv_no)
+    public function getInvHeaderDetail($inv_id)
     {
-        // Fetch InvHeader with related invLine and ppn
-        $invHeader = InvHeader::with(['invLine'])->where('inv_no', $inv_no)->first();
+        // Fetch InvHeader with invPpn and invPph relationships first
+        $invHeader = InvHeader::with(['invPpn', 'invPph'])->findOrFail($inv_id);
 
-        if (!$invHeader) {
-            return response()->json([
-                'message' => 'Invoice header not found'
-            ], 404);
-        }
+        // Then manually load the filtered invLine relationship
+        $invHeader->load(['invLine' => function ($query) use ($invHeader) {
+            $query->where('bp_id', $invHeader->bp_code)
+                  ->where('inv_due_date', $invHeader->inv_date);
+        }]);
 
-        // Return the InvHeader data including related invLine and ppn
+        // Return the InvHeader data including related invLine, ppn, and pph
         return new InvHeaderResource($invHeader);
     }
 
@@ -129,35 +138,35 @@ class FinanceInvHeaderController extends Controller
                 $files[] = [
                     'type' => 'invoice',
                     'path' => $request->file('invoice_file')
-                        ->storeAs('invoices', 'INVOICE_'.$request->inv_no.'.pdf')
+                        ->storeAs('invoices', 'INVOICE_'.$invHeader->inv_id.'.pdf')
                 ];
             }
             if ($request->hasFile('fakturpajak_file')) {
                 $files[] = [
                     'type' => 'fakturpajak',
                     'path' => $request->file('fakturpajak_file')
-                        ->storeAs('faktur', 'FAKTURPAJAK_'.$request->inv_no.'.pdf')
+                        ->storeAs('faktur', 'FAKTURPAJAK_'.$invHeader->inv_id.'.pdf')
                 ];
             }
             if ($request->hasFile('suratjalan_file')) {
                 $files[] = [
                     'type' => 'suratjalan',
                     'path' => $request->file('suratjalan_file')
-                        ->storeAs('suratjalan', 'SURATJALAN_'.$request->inv_no.'.pdf')
+                        ->storeAs('suratjalan', 'SURATJALAN_'.$invHeader->inv_id.'.pdf')
                 ];
             }
             if ($request->hasFile('po_file')) {
                 $files[] = [
                     'type' => 'po',
                     'path' => $request->file('po_file')
-                        ->storeAs('po', 'PO_'.$request->inv_no.'.pdf')
+                        ->storeAs('po', 'PO_'.$invHeader->inv_id.'.pdf')
                 ];
             }
 
             // Save file references with type
             foreach ($files as $file) {
                 InvDocument::create([
-                    'inv_no' => $request->inv_no,
+                    'inv_id' => $invHeader->inv_id,
                     'type' => $file['type'],
                     'file' => $file['path']
                 ]);
@@ -165,6 +174,7 @@ class FinanceInvHeaderController extends Controller
 
             // Update inv_line references
             foreach ($request->inv_line_detail as $line) {
+                $invHeader->invLine()->attach($line);
                 InvLine::where('inv_line_id', $line)->update([
                     'inv_supplier_no' => $request->inv_no,
                     'inv_due_date'    => $request->inv_date,
@@ -193,7 +203,7 @@ class FinanceInvHeaderController extends Controller
         return new InvHeaderResource($invHeader);
     }
 
-    public function update(FinanceInvHeaderUpdateRequest $request, $inv_no)
+    public function update(FinanceInvHeaderUpdateRequest $request, $inv_id)
     {
         // Check if status is Rejected but no reason provided (can stay outside the transaction)
         if ($request->status === 'Rejected' && empty($request->reason)) {
@@ -203,11 +213,11 @@ class FinanceInvHeaderController extends Controller
         }
 
         // Wrap the entire process in a single database transaction
-        return DB::transaction(function () use ($request, $inv_no) {
+        return DB::transaction(function () use ($request, $inv_id) {
             $request->validated();
 
-            // Eager load invPpn and invPph relationships
-            $invHeader = InvHeader::with(['invLine', 'invPpn', 'invPph'])->findOrFail($inv_no);
+            // Eager load invPpn and invPph relationships - use findOrFail() since inv_id is primary key
+            $invHeader = InvHeader::with(['invLine', 'invPpn', 'invPph'])->findOrFail($inv_id);
 
             // If status is Rejected, skip pph/plan_date logic
             if ($request->status === 'Rejected') {
@@ -300,7 +310,7 @@ class FinanceInvHeaderController extends Controller
                         $receiptNumber = 'SANOH' . Carbon::parse($invHeader->updated_at)->format('Ymd') . '/' . ($receiptCount + 1);
 
                         $partner = Partner::where('bp_code', $invHeader->bp_code)->select("adr_line_1")->first();
-                        $poNumbers = InvLine::where('inv_supplier_no', $inv_no)
+                        $poNumbers = InvLine::where('inv_supplier_no', $invHeader->inv_no)
                             ->pluck('po_no')
                             ->unique()
                             ->implode(', ');
@@ -319,7 +329,7 @@ class FinanceInvHeaderController extends Controller
                             'pph_amount'      => $pdfPphAmount,
                         ]);
 
-                        $filepath = storage_path("app/public/receipts/RECEIPT_{$inv_no}.pdf");
+                        $filepath = storage_path("app/public/receipts/RECEIPT_{$invHeader->inv_id}.pdf");
                         if (!file_exists(dirname($filepath))) {
                             mkdir(dirname($filepath), 0777, true);
                         }
@@ -330,6 +340,7 @@ class FinanceInvHeaderController extends Controller
                             Mail::to($supplierUser->email)->send(new InvoiceReadyMail([
                                 'partner_address' => $partner->adr_line_1 ?? '',
                                 'bp_code'         => $invHeader->bp_code,
+                                'inv_id'          => $invHeader->inv_id,
                                 'inv_no'          => $invHeader->inv_no,
                                 'status'          => $invHeader->status,
                                 'total_amount'    => $invHeader->total_amount,
@@ -339,13 +350,13 @@ class FinanceInvHeaderController extends Controller
                         }
 
                         $invHeader->update([
-                            'receipt_path'   => "receipts/RECEIPT_{$inv_no}.pdf",
+                            'receipt_path'   => "receipts/RECEIPT_{$invHeader->inv_id}.pdf",
                             'receipt_number' => $receiptNumber
                         ]);
 
                         return response()->json([
-                            'message'        => "Invoice {$inv_no} Is Ready To Payment",
-                            'receipt_path'   => "receipts/RECEIPT_{$inv_no}.pdf",
+                            'message'        => "Invoice {$invHeader->inv_no} Is Ready To Payment",
+                            'receipt_path'   => "receipts/RECEIPT_{$invHeader->inv_id}.pdf",
                             'receipt_number' => $receiptNumber
                         ]);
 
@@ -354,19 +365,19 @@ class FinanceInvHeaderController extends Controller
                     }
                 case 'Rejected':
                     return response()->json([
-                        'message' => "Invoice {$inv_no} Rejected: {$invHeader->reason}"
+                        'message' => "Invoice {$invHeader->inv_no} Rejected: {$invHeader->reason}"
                     ]);
                 default:
                     return response()->json([
-                        'message' => "Invoice {$inv_no} updated to status: {$invHeader->status}"
+                        'message' => "Invoice {$invHeader->inv_no} updated to status: {$invHeader->status}"
                     ]);
             }
         });
     }
 
-    public function updateStatusToInProcess($inv_no)
+    public function updateStatusToInProcess($inv_id)
     {
-        $invHeader = InvHeader::where('inv_no', $inv_no)->where('status', 'New')->firstOrFail();
+        $invHeader = InvHeader::where('inv_id', $inv_id)->where('status', 'New')->firstOrFail();
 
         $invHeader->update([
             'status' => 'In Process',
@@ -374,17 +385,18 @@ class FinanceInvHeaderController extends Controller
         ]);
 
         return response()->json([
-            'message' => "Invoice {$inv_no} status updated to In Process"
+            'message' => "Invoice {$invHeader->inv_no} status updated to In Process"
         ]);
     }
 
     public function uploadPaymentDocuments(FinancePaymentDocumentRequest $request)
     {
-        $invNos = $request->input('inv_nos', []);
+        $invIds = $request->input('inv_ids', []);
         $updatedBy = Auth::user()->name;
         $actualDate = $request->input('actual_date');
 
-        InvHeader::whereIn('inv_no', $invNos)
+        // Update invoices directly using inv_ids
+        InvHeader::whereIn('inv_id', $invIds)
             ->where('status', 'Ready To Payment')
             ->update([
                 'status'      => 'Paid',
@@ -394,37 +406,37 @@ class FinanceInvHeaderController extends Controller
 
         return response()->json([
             'success'    => true,
-            'message'    => count($invNos) . ' invoices marked as Paid',
+            'message'    => count($invIds) . ' invoices marked as Paid',
             'actual_date'=> $actualDate,
         ]);
     }
 
-    public function revertToReadyToPayment(Request $request, $inv_no = null)
+    public function revertToReadyToPayment(Request $request)
     {
         $updatedBy = Auth::user()->name;
 
-        // Check if bulk operation (array of invoice numbers in request body)
+        // Bulk operation (array of invoice IDs in request body)
         if ($request->has('invoice_numbers') && is_array($request->input('invoice_numbers'))) {
-            $invoiceNumbers = $request->input('invoice_numbers');
+            $invoiceIds = $request->input('invoice_numbers'); // Now expecting inv_id values
 
-            // Validate that all invoices exist and have 'Paid' status
-            $invHeaders = InvHeader::whereIn('inv_no', $invoiceNumbers)
+            // Validate that all invoices exist and have 'Paid' status using inv_id directly
+            $invHeaders = InvHeader::whereIn('inv_id', $invoiceIds)
                 ->where('status', 'Paid')
                 ->get();
 
-            if ($invHeaders->count() !== count($invoiceNumbers)) {
-                $foundInvoiceNumbers = $invHeaders->pluck('inv_no')->toArray();
-                $notFoundInvoiceNumbers = array_diff($invoiceNumbers, $foundInvoiceNumbers);
+            if ($invHeaders->count() !== count($invoiceIds)) {
+                $foundInvoiceIds = $invHeaders->pluck('inv_id')->toArray();
+                $notFoundInvoiceIds = array_diff($invoiceIds, $foundInvoiceIds);
 
                 return response()->json([
                     'success' => false,
                     'message' => 'Some invoices not found or not in Paid status',
-                    'not_found' => $notFoundInvoiceNumbers,
+                    'not_found' => $notFoundInvoiceIds,
                 ], 404);
             }
 
-            // Update all invoices in bulk
-            InvHeader::whereIn('inv_no', $invoiceNumbers)
+            // Update all invoices in bulk using inv_ids directly
+            InvHeader::whereIn('inv_id', $invoiceIds)
                 ->where('status', 'Paid')
                 ->update([
                     'status'      => 'Ready To Payment',
@@ -434,33 +446,14 @@ class FinanceInvHeaderController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => count($invoiceNumbers) . ' invoices reverted to Ready To Payment status',
-                'updated_invoices' => $invoiceNumbers,
+                'message' => count($invoiceIds) . ' invoices reverted to Ready To Payment status',
+                'updated_invoices' => $invoiceIds,
             ]);
         }
 
-        // Single invoice operation (original functionality)
-        if (!$inv_no) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invoice number is required',
-            ], 400);
-        }
-
-        $invHeader = InvHeader::where('inv_no', $inv_no)
-            ->where('status', 'Paid')
-            ->firstOrFail();
-
-        // Update invoice status to Ready To Payment and nullify actual_date
-        $invHeader->update([
-            'status'      => 'Ready To Payment',
-            'updated_by'  => $updatedBy,
-            'actual_date' => null,
-        ]);
-
         return response()->json([
-            'success' => true,
-            'message' => "Invoice {$inv_no} status reverted to Ready To Payment",
-        ]);
+            'success' => false,
+            'message' => 'Invoice IDs array is required',
+        ], 400);
     }
 }

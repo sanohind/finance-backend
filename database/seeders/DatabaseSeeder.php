@@ -25,7 +25,6 @@ class DatabaseSeeder extends Seeder
         $this->call([
             InvPphSeeder::class, // Add this line
             InvPpnSeeder::class, // Added InvPpnSeeder
-            UserSeeder::class, // Added UserSeeder
             InvLineSeeder::class, // Added InvLineSeeder
             // Add other seeders here if needed
         ]);

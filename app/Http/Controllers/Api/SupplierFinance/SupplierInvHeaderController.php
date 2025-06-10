@@ -35,7 +35,7 @@ class SupplierInvHeaderController extends Controller
         return InvHeaderResource::collection($invHeaders);
     }
 
-    public function rejectInvoice(SupplierInvHeaderRejectedRequest $request, $inv_no)
+    public function rejectInvoice(SupplierInvHeaderRejectedRequest $request, $inv_id)
     {
         $request->validate([
             'reason' => 'required|string|max:255',
@@ -43,7 +43,7 @@ class SupplierInvHeaderController extends Controller
 
         $sp_code = Auth::user()->bp_code;
 
-        $invHeader = InvHeader::where('inv_no', $inv_no)
+        $invHeader = InvHeader::where('inv_id', $inv_id)
             ->where('bp_code', $sp_code)
             ->where('status', 'New')
             ->first();
@@ -72,7 +72,7 @@ class SupplierInvHeaderController extends Controller
         });
 
         return response()->json([
-            'message' => "Invoice {$inv_no} has been rejected and can be invoiced again."
+            'message' => "Invoice {$invHeader->inv_no} has been rejected and can be invoiced again."
         ]);
     }
 
@@ -138,35 +138,35 @@ class SupplierInvHeaderController extends Controller
                 $files[] = [
                     'type' => 'invoice',
                     'path' => $request->file('invoice_file')
-                        ->storeAs('invoices', 'INVOICE_'.$request->inv_no.'.pdf')
+                        ->storeAs('invoices', 'INVOICE_'.$invHeader->inv_id.'.pdf')
                 ];
             }
             if ($request->hasFile('fakturpajak_file')) {
                 $files[] = [
                     'type' => 'fakturpajak',
                     'path' => $request->file('fakturpajak_file')
-                        ->storeAs('faktur', 'FAKTURPAJAK_'.$request->inv_no.'.pdf')
+                        ->storeAs('faktur', 'FAKTURPAJAK_'.$invHeader->inv_id.'.pdf')
                 ];
             }
             if ($request->hasFile('suratjalan_file')) {
                 $files[] = [
                     'type' => 'suratjalan',
                     'path' => $request->file('suratjalan_file')
-                        ->storeAs('suratjalan', 'SURATJALAN_'.$request->inv_no.'.pdf')
+                        ->storeAs('suratjalan', 'SURATJALAN_'.$invHeader->inv_id.'.pdf')
                 ];
             }
             if ($request->hasFile('po_file')) {
                 $files[] = [
                     'type' => 'po',
                     'path' => $request->file('po_file')
-                        ->storeAs('po', 'PO_'.$request->inv_no.'.pdf')
+                        ->storeAs('po', 'PO_'.$invHeader->inv_id.'.pdf')
                 ];
             }
 
             // Save file references with type
             foreach ($files as $file) {
                 InvDocument::create([
-                    'inv_no' => $request->inv_no,
+                    'inv_id' => $invHeader->inv_id,
                     'type' => $file['type'],
                     'file' => $file['path']
                 ]);
