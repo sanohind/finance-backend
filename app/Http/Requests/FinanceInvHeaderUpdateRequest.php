@@ -29,7 +29,7 @@ class FinanceInvHeaderUpdateRequest extends FormRequest
             'inv_line_remove'  => 'nullable|array',
             'inv_line_remove.*'=> 'exists:inv_line,inv_line_id',
             'status'           => 'required|string|max:50|in:Ready To Payment,Rejected',
-            'plan_date'        => 'required|date', // Changed from required_if
+            'plan_date'        => 'required_if:status,Ready To Payment|date', // Changed from required_if
             'reason'           => 'required_if:status,Rejected',
             'updated_by'       => 'nullable|string|max:100',
         ];
