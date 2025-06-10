@@ -64,9 +64,9 @@ Route::middleware(['auth:sanctum', 'userRole:2'])->prefix('finance')->group(func
     Route::get('inv-header', [FinanceInvHeaderController::class, 'getInvHeader']);
     Route::post('inv-header/store', [FinanceInvHeaderController::class, 'store']);
     Route::get('inv-header/bp-code/{bp_code}', [FinanceInvHeaderController::class, 'getInvHeaderByBpCode']);
-    Route::put('inv-header/{inv_no}', [FinanceInvHeaderController::class, 'update']);
-    Route::put('inv-header/in-process/{inv_no}', [FinanceInvHeaderController::class, 'updateStatusToInProcess']);
-    Route::get('inv-header/detail/{inv_no}', [FinanceInvHeaderController::class, 'getInvHeaderDetail']);
+    Route::put('inv-header/{inv_id}', [FinanceInvHeaderController::class, 'update']);
+    Route::put('inv-header/in-process/{inv_id}', [FinanceInvHeaderController::class, 'updateStatusToInProcess']);
+    Route::get('inv-header/detail/{inv_id}', [FinanceInvHeaderController::class, 'getInvHeaderDetail']);
     Route::post('inv-header/upload-payment', [FinanceInvHeaderController::class, 'uploadPaymentDocuments']);
     Route::post('inv-header/revertInvoices', [FinanceInvHeaderController::class, 'revertToReadyToPayment']);
 
@@ -112,7 +112,7 @@ Route::middleware(['auth:sanctum', 'userRole:3'])->prefix('supplier-finance')->g
     // Invoice management
     Route::get('inv-header', [SupplierInvHeaderController::class, 'getInvHeader']);
     Route::post('inv-header/store', [SupplierInvHeaderController::class, 'store']);
-    Route::put('inv-header/reject/{inv_no}', [SupplierInvHeaderController::class, 'rejectInvoice']);
+    Route::put('inv-header/reject/{inv_id}', [SupplierInvHeaderController::class, 'rejectInvoice']);
 
     // News
     Route::get('news', [SupplierNewsController::class, 'index']);

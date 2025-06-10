@@ -12,13 +12,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::connection('mysql')->create('inv_header', function (Blueprint $table) {
-            $table->string('inv_no', 255)->primary();
+            $table->id('inv_id');
+            $table->string('inv_no')->nullable();
             $table->string('receipt_number')->nullable();
             $table->string('receipt_path')->nullable();
 
             // Foreign key to user
             $table->string('bp_code')->nullable();
-            $table->foreign('bp_code')->references('bp_code')->on('user');
 
             $table->date('inv_date')->nullable();
             $table->date('plan_date')->nullable();

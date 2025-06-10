@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\Local\Partner;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class InvLine extends Model
 {
@@ -61,9 +62,10 @@ class InvLine extends Model
         'payment_doc_date',
     ];
 
-    public function invHeader(): BelongsTo
+    public function invHeader(): BelongsToMany
     {
-        return $this->belongsTo(InvHeader::class, 'inv_supplier_no', 'inv_no');
+        return $this->belongsToMany(InvHeader::class, 'transaction_invoice', 'inv_line_id', 'inv_id')
+            ->withTimestamps();
     }
 
     public function partner(): BelongsTo

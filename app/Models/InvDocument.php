@@ -18,13 +18,13 @@ class InvDocument extends Model
     protected $table = "inv_document";
 
     protected $fillable = [
-        'inv_no',
+        'inv_id',
         'file',
         'type',
     ];
 
     public function invHeader(): BelongsTo
     {
-        return $this->belongsTo(InvHeader::class, 'inv_no', 'inv_no');
+        return $this->belongsTo(InvHeader::class, 'inv_id', 'inv_id');
     }
 }
