@@ -23,65 +23,34 @@ class FinanceInvLineController extends Controller
         $query = InvLine::with('partner')->where('bp_id', $bp_code);
 
         // Apply filters based on query parameters present in the request
-        // These keys should match the 'FilterParams' interface in GrTracking.tsx
+        // These are the main filters used by the GR Tracking form
 
-        if ($request->filled('gr_no')) {
-            $query->where('gr_no', 'like', '%' . $request->query('gr_no') . '%');
+        // Packing Slip filter - maps to 'packing_slip' field
+        if ($request->filled('packing_slip')) {
+            $query->where('packing_slip', 'like', '%' . $request->query('packing_slip') . '%');
         }
 
-        // Assuming 'tax_number' from frontend maps to 'inv_doc_no' in the DB
-        if ($request->filled('tax_number')) {
-            $query->where('inv_doc_no', 'like', '%' . $request->query('tax_number') . '%');
+        // Receipt Number filter - maps to 'receipt_no' field
+        if ($request->filled('receipt_no')) {
+            $query->where('receipt_no', 'like', '%' . $request->query('receipt_no') . '%');
         }
 
+        // PO Number filter
         if ($request->filled('po_no')) {
             $query->where('po_no', 'like', '%' . $request->query('po_no') . '%');
         }
 
-        // Assuming 'invoice_no' from frontend maps to 'inv_doc_no' in the DB
-        if ($request->filled('invoice_no')) {
-            $query->where('inv_doc_no', 'like', '%' . $request->query('invoice_no') . '%');
+        // Date range filters
+        if ($request->filled('gr_date_from')) {
+            $query->whereDate('actual_receipt_date', '>=', $request->query('gr_date_from'));
         }
 
-        // Assuming 'status' from frontend maps to 'is_confirmed' (boolean) in the DB
-        if ($request->filled('status')) {
-            $statusValue = strtolower($request->query('status'));
-            if ($statusValue === 'yes' || $statusValue === 'true' || $statusValue === '1') {
-                $query->where('is_confirmed', true);
-            } elseif ($statusValue === 'no' || $statusValue === 'false' || $statusValue === '0') {
-                $query->where('is_confirmed', false);
-            }
-            // Add more conditions if other status representations are possible
+        if ($request->filled('gr_date_to')) {
+            $query->whereDate('actual_receipt_date', '<=', $request->query('gr_date_to'));
         }
 
-        // Assuming 'gr_date' from frontend maps to 'actual_receipt_date' in the DB
-        if ($request->filled('gr_date')) {
-            $query->whereDate('actual_receipt_date', $request->query('gr_date'));
-        }
-
-        // Assuming 'tax_date' from frontend maps to 'inv_doc_date' in the DB
-        if ($request->filled('tax_date')) {
-            $query->whereDate('inv_doc_date', $request->query('tax_date'));
-        }
-
-        // Assuming 'po_date' from frontend maps to 'created_at' or a specific PO date field
-        // Adjust 'created_at' if you have a dedicated 'po_date' column
-        if ($request->filled('po_date')) {
-            $query->whereDate('created_at', $request->query('po_date'));
-        }
-
-        // Assuming 'invoice_date' from frontend maps to 'inv_doc_date' in the DB
-        if ($request->filled('invoice_date')) {
-            $query->whereDate('inv_doc_date', $request->query('invoice_date'));
-        }
-
-        // Assuming 'dn_number' from frontend maps to 'inv_doc_no' or a specific DN field
-        if ($request->filled('dn_number')) {
-            $query->where('inv_doc_no', 'like', '%' . $request->query('dn_number') . '%');
-        }
-
-        // Execute the query with applied filters
-        $invLines = $query->get(); // Consider using ->paginate() for large datasets
+        // Execute the query with applied filters and order by newest actual_receipt_date first
+        $invLines = $query->orderBy('actual_receipt_date', 'desc')->get(); // Consider using ->paginate() for large datasets
 
         // Return the data using your resource collection
         return InvLineResource::collection($invLines);
@@ -96,50 +65,30 @@ class FinanceInvLineController extends Controller
             ->whereNull('inv_due_date');
 
         // Apply filters based on query parameters present in the request
+        // These are the same filters used by the GR Tracking form
 
-        if ($request->filled('gr_no')) {
-            $query->where('gr_no', 'like', '%' . $request->query('gr_no') . '%');
+        // Packing Slip filter - maps to 'packing_slip' field
+        if ($request->filled('packing_slip')) {
+            $query->where('packing_slip', 'like', '%' . $request->query('packing_slip') . '%');
         }
 
-        if ($request->filled('tax_number')) {
-            $query->where('inv_doc_no', 'like', '%' . $request->query('tax_number') . '%');
+        // Receipt Number filter - maps to 'receipt_no' field
+        if ($request->filled('receipt_no')) {
+            $query->where('receipt_no', 'like', '%' . $request->query('receipt_no') . '%');
         }
 
+        // PO Number filter
         if ($request->filled('po_no')) {
             $query->where('po_no', 'like', '%' . $request->query('po_no') . '%');
         }
 
-        if ($request->filled('invoice_no')) {
-            $query->where('inv_doc_no', 'like', '%' . $request->query('invoice_no') . '%');
+        // Date range filters
+        if ($request->filled('gr_date_from')) {
+            $query->whereDate('actual_receipt_date', '>=', $request->query('gr_date_from'));
         }
 
-        if ($request->filled('status')) {
-            $statusValue = strtolower($request->query('status'));
-            if ($statusValue === 'yes' || $statusValue === 'true' || $statusValue === '1') {
-                $query->where('is_confirmed', true);
-            } elseif ($statusValue === 'no' || $statusValue === 'false' || $statusValue === '0') {
-                $query->where('is_confirmed', false);
-            }
-        }
-
-        if ($request->filled('gr_date')) {
-            $query->whereDate('actual_receipt_date', $request->query('gr_date'));
-        }
-
-        if ($request->filled('tax_date')) {
-            $query->whereDate('inv_doc_date', $request->query('tax_date'));
-        }
-
-        if ($request->filled('po_date')) {
-            $query->whereDate('created_at', $request->query('po_date'));
-        }
-
-        if ($request->filled('invoice_date')) {
-            $query->whereDate('inv_doc_date', $request->query('invoice_date'));
-        }
-
-        if ($request->filled('dn_number')) {
-            $query->where('inv_doc_no', 'like', '%' . $request->query('dn_number') . '%');
+        if ($request->filled('gr_date_to')) {
+            $query->whereDate('actual_receipt_date', '<=', $request->query('gr_date_to'));
         }
 
         // Execute the query with applied filters and order by newest actual_receipt_date first

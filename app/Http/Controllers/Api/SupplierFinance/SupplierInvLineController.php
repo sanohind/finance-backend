@@ -17,7 +17,7 @@ class SupplierInvLineController extends Controller
     {
         $sp_code = Auth::user()->bp_code;
 
-        $invLines = InvLine::where('bp_id', $sp_code)->get();
+        $invLines = InvLine::where('bp_id', $sp_code)->orderBy('actual_receipt_date', 'desc')->get();
         return InvLineResource::collection($invLines);
     }
 
