@@ -204,7 +204,7 @@ class SupplierInvHeaderController extends Controller
 
     public function stream($type, $filename)
     {
-        $allowedTypes = ['invoices', 'faktur', 'suratjalan', 'po'];
+        $allowedTypes = ['invoices', 'faktur', 'suratjalan', 'po', 'receipts'];
         if (!in_array($type, $allowedTypes)) {
             abort(404);
         }
