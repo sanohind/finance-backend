@@ -138,28 +138,28 @@ class FinanceInvHeaderController extends Controller
                 $files[] = [
                     'type' => 'invoice',
                     'path' => $request->file('invoice_file')
-                        ->storeAs('invoices', 'INVOICE_'.$invHeader->inv_id.'.pdf')
+                        ->storeAs('invoices', 'INVOICE_'.$invHeader->inv_id.'.pdf', 'public')
                 ];
             }
             if ($request->hasFile('fakturpajak_file')) {
                 $files[] = [
                     'type' => 'fakturpajak',
                     'path' => $request->file('fakturpajak_file')
-                        ->storeAs('faktur', 'FAKTURPAJAK_'.$invHeader->inv_id.'.pdf')
+                        ->storeAs('faktur', 'FAKTURPAJAK_'.$invHeader->inv_id.'.pdf', 'public')
                 ];
             }
             if ($request->hasFile('suratjalan_file')) {
                 $files[] = [
                     'type' => 'suratjalan',
                     'path' => $request->file('suratjalan_file')
-                        ->storeAs('suratjalan', 'SURATJALAN_'.$invHeader->inv_id.'.pdf')
+                        ->storeAs('suratjalan', 'SURATJALAN_'.$invHeader->inv_id.'.pdf', 'public')
                 ];
             }
             if ($request->hasFile('po_file')) {
                 $files[] = [
                     'type' => 'po',
                     'path' => $request->file('po_file')
-                        ->storeAs('po', 'PO_'.$invHeader->inv_id.'.pdf')
+                        ->storeAs('po', 'PO_'.$invHeader->inv_id.'.pdf', 'public')
                 ];
             }
 
