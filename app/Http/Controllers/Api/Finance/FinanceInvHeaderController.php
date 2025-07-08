@@ -192,7 +192,6 @@ class FinanceInvHeaderController extends Controller
                     'inv_no'          => $request->inv_no,
                     'status'          => $invHeader->status,
                     'total_amount'    => $invHeader->total_amount,
-                    'plan_date'       => $invHeader->plan_date,
                 ]));
             }
 
@@ -235,12 +234,13 @@ class FinanceInvHeaderController extends Controller
                     'pph_amount'      => null,
                 ]);
 
-                foreach ($invHeader->invLine as $line) {
-                    $line->update([
-                        'inv_supplier_no' => null,
-                        'inv_due_date'    => null,
-                    ]);
-                }
+                // Remove inv_supplier_no and inv_due_date from all related inv_lines
+                // Use the relationship to get the line IDs, then update via direct query
+                $lineIds = $invHeader->invLine->pluck('inv_line_id');
+                InvLine::whereIn('inv_line_id', $lineIds)->update([
+                    'inv_supplier_no' => null,
+                    'inv_due_date'    => null,
+                ]);
             } else { // Status is not 'Rejected'
                 $finalPphId = null;
                 $finalPphBaseAmount = null;

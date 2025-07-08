@@ -43,7 +43,8 @@ class SupplierInvHeaderController extends Controller
 
         $sp_code = Auth::user()->bp_code;
 
-        $invHeader = InvHeader::where('inv_id', $inv_id)
+        $invHeader = InvHeader::with('invLine')
+            ->where('inv_id', $inv_id)
             ->where('bp_code', $sp_code)
             ->where('status', 'New')
             ->first();
@@ -63,12 +64,12 @@ class SupplierInvHeaderController extends Controller
             ]);
 
             // Remove inv_supplier_no and inv_due_date from all related inv_lines
-            foreach ($invHeader->invLine as $line) {
-                $line->update([
-                    'inv_supplier_no' => null,
-                    'inv_due_date'    => null,
-                ]);
-            }
+            // Use the relationship to get the line IDs, then update via direct query
+            $lineIds = $invHeader->invLine->pluck('inv_line_id');
+            InvLine::whereIn('inv_line_id', $lineIds)->update([
+                'inv_supplier_no' => null,
+                'inv_due_date'    => null,
+            ]);
         });
 
         return response()->json([
@@ -128,7 +129,6 @@ class SupplierInvHeaderController extends Controller
                 'tax_amount'      => $tax_amount,
                 'total_amount'    => $total_amount,
                 'status'          => 'New',
-                'reason'          => $request->reason,
                 'created_by'      => Auth::user()->name,
             ]);
 
@@ -174,6 +174,7 @@ class SupplierInvHeaderController extends Controller
 
             // Update inv_line references
             foreach ($request->inv_line_detail as $line) {
+                $invHeader->invLine()->attach($line);
                 InvLine::where('inv_line_id', $line)->update([
                     'inv_supplier_no' => $request->inv_no,
                     'inv_due_date'    => $request->inv_date,
@@ -191,7 +192,6 @@ class SupplierInvHeaderController extends Controller
                     'inv_no'          => $request->inv_no,
                     'status'          => $invHeader->status,
                     'total_amount'    => $invHeader->total_amount,
-                    'plan_date'       => $invHeader->plan_date,
                 ]));
             }
 
