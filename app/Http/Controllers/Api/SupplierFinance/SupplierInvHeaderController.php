@@ -56,13 +56,6 @@ class SupplierInvHeaderController extends Controller
         }
 
         DB::transaction(function () use ($invHeader, $request) {
-            // Update invoice status and reason
-            $invHeader->update([
-                'status'     => 'Rejected',
-                'reason'     => $request->reason,
-                'updated_by' => Auth::user()->name,
-            ]);
-
             // Remove inv_supplier_no and inv_due_date from all related inv_lines
             // Use the relationship to get the line IDs, then update via direct query
             $lineIds = $invHeader->invLine->pluck('inv_line_id');
@@ -70,10 +63,13 @@ class SupplierInvHeaderController extends Controller
                 'inv_supplier_no' => null,
                 'inv_due_date'    => null,
             ]);
+
+            // Delete the invoice header record completely
+            $invHeader->delete();
         });
 
         return response()->json([
-            'message' => "Invoice {$invHeader->inv_no} has been rejected and can be invoiced again."
+            'message' => "Invoice {$invHeader->inv_no} has been rejected and deleted. Invoice lines are now available for invoicing again."
         ]);
     }
 
