@@ -49,8 +49,7 @@ class SyncInvoiceLinesMonthlyJob implements ShouldQueue
                 InvLine::updateOrCreate(
                     [
                         'po_no' => $data->po_no,
-                        'receipt_no' => $data->receipt_no,
-                        'receipt_line' => $data->receipt_line
+                        'gr_no' => $data->gr_no,
                     ],
                     [
                         'po_no' => $data->po_no,
