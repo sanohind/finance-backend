@@ -100,8 +100,7 @@ class SyncInvoiceLinesDailyJob implements ShouldQueue
                     // Define unique key combination
                     $uniqueKey = [
                         'po_no' => $data->po_no,
-                        'receipt_no' => $data->receipt_no,
-                        'receipt_line' => $data->receipt_line
+                        'gr_no' => $data->gr_no,
                     ];
 
                     // Use firstOrCreate to prevent race condition duplicates
