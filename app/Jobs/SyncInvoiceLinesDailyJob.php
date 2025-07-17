@@ -104,7 +104,7 @@ class SyncInvoiceLinesDailyJob implements ShouldQueue
                     ];
 
                     // Use firstOrCreate to prevent race condition duplicates
-                    $invLine = InvLine::firstOrCreate($uniqueKey, [
+                    $invLine = InvLine::updateOrCreate($uniqueKey, [
                         'po_no' => $data->po_no,
                         'bp_id' => $data->bp_id,
                         'bp_name' => $data->bp_name,
