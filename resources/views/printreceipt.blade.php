@@ -214,7 +214,7 @@
                 <div class="row-with-currency">
                     <div class="label">PPh Amount (VAT)</div>
                     <div class="currency">IDR</div>
-                    <div class="value">{{ number_format($invHeader->pph_amount - $invHeader->pph_base_amount, 2, '.', ',') }}</div>
+                    <div class="value">{{ number_format($invHeader->pph_amount, 2, '.', ',') }}</div>
                 </div>
 
                 <div class="divider"></div>

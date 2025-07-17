@@ -261,7 +261,7 @@ class FinanceInvHeaderController extends Controller
                     // Only process pph_base_amount if it's provided (when pph_id is also present)
                     if ($request->filled('pph_base_amount')) {
                         $finalPphBaseAmount = (float)$request->pph_base_amount;
-                        $finalPphAmountCalculated = $finalPphBaseAmount + ($finalPphBaseAmount * $pphRate);
+                        $finalPphAmountCalculated = $finalPphBaseAmount * $pphRate;
                     } else {
                         // pph_id was provided, but pph_base_amount was not. Set base and calculated amount to null.
                         $finalPphBaseAmount = null;
