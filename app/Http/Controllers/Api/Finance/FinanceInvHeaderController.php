@@ -28,14 +28,16 @@ class FinanceInvHeaderController extends Controller
 {
     public function getInvHeader()
     {
-        // Load invoice headers first without invLine relationship
-        $invHeaders = InvHeader::orderBy('created_at', 'desc')->get();
+        // Load invoice headers with PPh relationship
+        $invHeaders = InvHeader::with('pph') // Add this if you have a pph relationship
+                            ->orderBy('created_at', 'desc')
+                            ->get();
 
         // Apply the same filtering condition for invLine relationship for each header
         foreach ($invHeaders as $invHeader) {
             $invHeader->load(['invLine' => function ($query) use ($invHeader) {
                 $query->where('bp_id', $invHeader->bp_code)
-                      ->where('inv_due_date', $invHeader->inv_date);
+                    ->where('inv_due_date', $invHeader->inv_date);
             }]);
         }
 
@@ -113,8 +115,8 @@ class FinanceInvHeaderController extends Controller
 
             // Calculate amounts
             $tax_base_amount = $total_dpp;
-            $tax_amount      = $tax_base_amount + ($tax_base_amount * $ppnRate);
-            $total_amount    = $tax_amount;
+            $tax_amount      = $tax_base_amount * $ppnRate;
+            $total_amount    = $tax_base_amount + $tax_amount;
 
             // Create InvHeader
             $invHeader = InvHeader::create([
@@ -282,9 +284,10 @@ class FinanceInvHeaderController extends Controller
 
                 // 5) PPN Amount (tax_amount from InvHeader is PPN-inclusive based on store logic)
                 $ppnInclusiveAmount = $invHeader->tax_amount;
+                $ppnAmount = $invHeader->tax_base_amount;
 
                 // 6) total_amount = "ppn_amount minus pph_amount_effect"
-                $totalAmount = $ppnInclusiveAmount - ($finalPphAmountCalculated ?? 0);
+                $totalAmount = $ppnAmount + $ppnInclusiveAmount - ($finalPphAmountCalculated ?? 0);
 
                 // 7) Update the InvHeader record
                 $invHeader->update([

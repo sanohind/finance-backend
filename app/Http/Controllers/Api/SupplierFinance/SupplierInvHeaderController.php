@@ -109,8 +109,8 @@ class SupplierInvHeaderController extends Controller
             }
 
             $tax_base_amount = $total_dpp;
-            $tax_amount      = $tax_base_amount + ($tax_base_amount * $ppnRate);
-            $total_amount    = $tax_amount;
+            $tax_amount      = $tax_base_amount * $ppnRate;
+            $total_amount    = $tax_base_amount + $tax_amount;
 
             // Create the InvHeader record (note the inclusion of pph_id similar to SuperAdmin)
             $invHeader = InvHeader::create([
