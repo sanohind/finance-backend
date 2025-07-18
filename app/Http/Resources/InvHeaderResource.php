@@ -26,7 +26,7 @@ class InvHeaderResource extends JsonResource
             'ppn_id'            => $this->ppn_id,
             'tax_base_amount'   => $this->tax_base_amount,
             'tax_amount'        => $this->tax_amount,
-            'pph_id'            => $this->pph,
+            'pph_id'            => $this->pph_id,
             'pph_base_amount'   => $this->pph_base_amount,
             'pph_amount'        => $this->pph_amount,
             'total_dpp'         => $this->total_dpp,
