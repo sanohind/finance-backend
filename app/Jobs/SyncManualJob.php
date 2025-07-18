@@ -34,8 +34,8 @@ class SyncManualJob implements ShouldQueue
             $oneMonthBefore = now()->subMonthNoOverflow()->startOfMonth()->format('Y-m-d');
 
             // Get da6a from ERP
-            $sqlsrvData = InvReceipt::whereYear('payment_doc_date', $currentYear)
-                ->whereBetween('payment_doc_date', [$oneMonthBefore, $currentMonth])
+            $sqlsrvData = InvReceipt::whereYear('actual_receipt_date', $currentYear)
+                ->whereBetween('actual_receipt_date', [$oneMonthBefore, $currentMonth])
                 ->get();
             // \Log::info($sqlsrvData);
 
