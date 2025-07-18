@@ -1,22 +1,24 @@
 <?php
 
+use App\Jobs\SyncManualJob;
 use Illuminate\Http\Request;
+use App\Models\ERP\InvReceipt;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\Admin\UserController;
-use App\Http\Controllers\Api\Admin\SuperAdminDashboardController;
-use App\Http\Controllers\Api\Admin\SuperAdminInvDocumentController;
+use App\Http\Controllers\Api\Local2\LocalDataController;
+use App\Http\Controllers\Api\Finance\FinanceNewsController;
+use App\Http\Controllers\Api\Local2\InvoiceReceiptController;
+use App\Http\Controllers\Api\Finance\FinanceInvLineController;
 use App\Http\Controllers\Api\Finance\FinanceDashboardController;
 use App\Http\Controllers\Api\Finance\FinanceInvHeaderController;
-use App\Http\Controllers\Api\Finance\FinanceInvLineController;
+use App\Http\Controllers\Api\Admin\SuperAdminDashboardController;
 use App\Http\Controllers\Api\Finance\FinanceInvDocumentController;
-use App\Http\Controllers\Api\Finance\FinanceNewsController;
+use App\Http\Controllers\Api\Admin\SuperAdminInvDocumentController;
+use App\Http\Controllers\Api\SupplierFinance\SupplierNewsController;
+use App\Http\Controllers\Api\SupplierFinance\SupplierInvLineController;
 use App\Http\Controllers\Api\SupplierFinance\SupplierDashboardController;
 use App\Http\Controllers\Api\SupplierFinance\SupplierInvHeaderController;
-use App\Http\Controllers\Api\SupplierFinance\SupplierInvLineController;
-use App\Http\Controllers\Api\SupplierFinance\SupplierNewsController;
-use App\Http\Controllers\Api\Local2\LocalDataController;
-use App\Http\Controllers\Api\Local2\InvoiceReceiptController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -26,6 +28,25 @@ Route::get('local2/sync-inv-line', [LocalDataController::class, 'syncInvLine'])-
 Route::get('/stream/{type}/{filename}', [FinanceInvDocumentController::class, 'stream']);
 
 Route::get('sync', [InvoiceReceiptController::class, 'copyInvLines']);
+
+Route::get('syncnow', function () {
+    dispatch(new SyncManualJob());
+    return json_encode('Selesai');
+});
+
+Route::get('tes1', function () {
+    $currentYear = now()->year;
+    // dd($currentYear);
+            $currentMonth = now()->endOfMonth()->format('Y-m-d');
+            $oneMonthBefore = now()->subMonthNoOverflow()->startOfMonth()->format('Y-m-d');
+// dd("$currentMonth $oneMonthBefore");
+            // Get da6a from ERP
+            $sqlsrvData = InvReceipt::whereYear('payment_doc_date', $currentYear)
+                ->whereBetween('payment_doc_date', [$oneMonthBefore, $currentMonth])
+                ->get();
+    // $sqlsrvData = InvReceipt::where('payment_doc_date', '2025-06-05')->get();
+    return json_encode($sqlsrvData);
+});
 
 // Admin routes
 Route::middleware(['auth:sanctum', 'userRole:1'])->prefix('super-admin')->group(function () {
