@@ -459,4 +459,44 @@ class FinanceInvHeaderController extends Controller
             'message' => 'Invoice IDs array is required',
         ], 400);
     }
+
+    public function revertToInProcess($inv_id)
+    {
+        $updatedBy = Auth::user()->name;
+
+        // Find the invoice and validate it exists and has 'Ready To Payment' status
+        $invHeader = InvHeader::where('inv_id', $inv_id)
+            ->where('status', 'Ready To Payment')
+            ->first();
+
+        if (!$invHeader) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invoice not found or not in Ready To Payment status',
+            ], 404);
+        }
+
+        // Calculate original total_amount (before PPH was applied)
+        $originalTotalAmount = $invHeader->tax_base_amount + $invHeader->tax_amount;
+
+        // Update the invoice back to In Process status and clear PPH data
+        $invHeader->update([
+            'status'         => 'In Process',
+            'updated_by'     => $updatedBy,
+            'plan_date'      => null,
+            'receipt_path'   => null,
+            'receipt_number' => null,
+            // Clear PPH data to force re-entry
+            'pph_id'         => null,
+            'pph_base_amount'=> null,
+            'pph_amount'     => null,
+            'total_amount'   => $originalTotalAmount, // Reset to PPN-only amount
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Invoice {$invHeader->inv_no} reverted to In Process status. PPH data cleared for re-entry.",
+            'updated_invoice' => $inv_id,
+        ]);
+    }
 }

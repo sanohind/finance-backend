@@ -139,8 +139,6 @@ class SyncInvoiceLinesDailyJob implements ShouldQueue
                         'inv_doc_date' => $data->inv_doc_date,
                         'inv_qty' => $data->inv_qty,
                         'inv_amount' => $data->inv_amount,
-                        'inv_supplier_no' => $data->inv_supplier_no,
-                        'inv_due_date' => $data->inv_due_date,
                         'payment_doc' => $data->payment_doc,
                         'payment_doc_date' => $data->payment_doc_date
                     ]);
@@ -181,8 +179,6 @@ class SyncInvoiceLinesDailyJob implements ShouldQueue
                             'inv_doc_date' => $data->inv_doc_date,
                             'inv_qty' => $data->inv_qty,
                             'inv_amount' => $data->inv_amount,
-                            'inv_supplier_no' => $data->inv_supplier_no,
-                            'inv_due_date' => $data->inv_due_date,
                             'payment_doc' => $data->payment_doc,
                             'payment_doc_date' => $data->payment_doc_date
                         ]);

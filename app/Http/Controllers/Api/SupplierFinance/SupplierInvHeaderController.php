@@ -88,8 +88,8 @@ class SupplierInvHeaderController extends Controller
     public function store(SupplierInvHeaderStoreRequest $request)
     {
         $invHeader = DB::transaction(function () use ($request) {
-            $sp_code = Auth::user()->bp_code;
             $request->validated();
+            $sp_code = Auth::user()->bp_code;
 
             $total_dpp = 0;
 
