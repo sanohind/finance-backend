@@ -82,31 +82,19 @@ class FinanceInvHeaderController extends Controller
         $invHeader = DB::transaction(function () use ($request) {
             $request->validated();
 
-            $total_dpp = 0;
-
             // Gather total DPP from selected inv lines
-            $firstInvLine = null;
+            $total_dpp = 0;
             foreach ($request->inv_line_detail as $line) {
                 $invLine = InvLine::find($line);
                 if (!$invLine) {
                     throw new \Exception("InvLine with ID {$line} not found.");
                 }
-                if (!$firstInvLine) {
-                    $firstInvLine = $invLine;
-                }
+
                 $total_dpp += $invLine->approve_qty * $invLine->receipt_unit_price;
             }
 
-            // Use bp_id from the first selected InvLine as bp_code for InvHeader
-            if (!$firstInvLine) {
-                throw new \Exception("No InvLine selected.");
-            }
-            $bp_code = $firstInvLine->bp_id;
-
-            // Fetch the chosen PPN record
-            $ppn = InvPpn::find($request->ppn_id);
-            $ppnRate = $ppn ? $ppn->ppn_rate : null;
-
+            // Get ppn rate
+            $ppnRate = InvPpn::where('ppn_id', $request->ppn_id)->value('ppn_rate');
             if ($ppnRate === null) {
                 return response()->json([
                     'message' => 'PPN Rate not found',
@@ -114,20 +102,19 @@ class FinanceInvHeaderController extends Controller
             }
 
             // Calculate amounts
-            $tax_base_amount = $total_dpp;
-            $tax_amount      = $tax_base_amount * $ppnRate;
-            $total_amount    = $tax_base_amount + $tax_amount;
+            $tax_amount      = $total_dpp * $ppnRate;
+            $total_amount    = $tax_amount;
 
             // Create InvHeader
             $invHeader = InvHeader::create([
                 'inv_no'          => $request->inv_no,
-                'bp_code'         => $bp_code, // Use bp_id from InvLine
+                'bp_code'         => $invLine->where('inv_line_id', $request->inv_line_detail[0])-value('bp_code'),
                 'inv_date'        => $request->inv_date,
                 'inv_faktur'      => $request->inv_faktur,
                 'inv_faktur_date' => $request->inv_faktur_date,
                 'total_dpp'       => $total_dpp,
                 'ppn_id'          => $request->ppn_id,
-                'tax_base_amount' => $tax_base_amount,
+                'tax_base_amount' => $total_dpp,
                 'tax_amount'      => $tax_amount,
                 'total_amount'    => $total_amount,
                 'status'          => 'New',
@@ -138,7 +125,7 @@ class FinanceInvHeaderController extends Controller
             $files = [];
             if ($request->hasFile('invoice_file')) {
                 $files[] = [
-                    'type' => 'invoice',
+                    'type' =>  'invoice',
                     'path' => $request->file('invoice_file')
                         ->storeAs('invoices', 'INVOICE_'.$invHeader->inv_id.'.pdf', 'public')
                 ];

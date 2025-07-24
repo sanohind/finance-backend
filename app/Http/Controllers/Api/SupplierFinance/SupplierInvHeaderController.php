@@ -88,40 +88,41 @@ class SupplierInvHeaderController extends Controller
     public function store(SupplierInvHeaderStoreRequest $request)
     {
         $invHeader = DB::transaction(function () use ($request) {
-            $sp_code = Auth::user()->bp_code;
             $request->validated();
+            $bpCode = Auth::user()->bp_code;
 
+            // Calculate total dpp
             $total_dpp = 0;
-
-            // Gather total DPP from selected inv lines
             foreach ($request->inv_line_detail as $line) {
                 $invLine = InvLine::find($line);
+                if (!$invLine) {
+                    throw new \Exception("InvLine with ID {$line} not found.");
+                }
+
                 $total_dpp += $invLine->approve_qty * $invLine->receipt_unit_price;
             }
 
-            // Fetch the chosen PPN record
-            $ppn = InvPpn::find($request->ppn_id);
-            $ppnRate = $ppn ? $ppn->ppn_rate : null;
+            // Get ppn rate
+            $ppnRate = InvPpn::where('ppn_id', $request->ppn_id)->value('ppn_rate');
             if ($ppnRate === null) {
                 return response()->json([
                     'message' => 'PPN Rate not found',
                 ], 404);
             }
-
-            $tax_base_amount = $total_dpp;
-            $tax_amount      = $tax_base_amount * $ppnRate;
-            $total_amount    = $tax_base_amount + $tax_amount;
+            // Calculate tax amount and assign the value to total_amount
+            $tax_amount      = $total_dpp * $ppnRate;
+            $total_amount    = $tax_amount;
 
             // Create the InvHeader record (note the inclusion of pph_id similar to SuperAdmin)
             $invHeader = InvHeader::create([
                 'inv_no'          => $request->inv_no,
-                'bp_code'         => $sp_code,
+                'bp_code'         => $bpCode,
                 'inv_date'        => $request->inv_date,
                 'inv_faktur'      => $request->inv_faktur,
                 'inv_faktur_date' => $request->inv_faktur_date,
                 'total_dpp'       => $total_dpp,
                 'ppn_id'          => $request->ppn_id,
-                'tax_base_amount' => $tax_base_amount,
+                'tax_base_amount' => $total_dpp,
                 'tax_amount'      => $tax_amount,
                 'total_amount'    => $total_amount,
                 'status'          => 'New',
