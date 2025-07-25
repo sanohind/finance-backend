@@ -28,8 +28,13 @@ class FinanceInvHeaderController extends Controller
 {
     public function getInvHeader()
     {
-        // Load invoice headers with PPh and PPN relationships
+        // Load invoice headers from transaction table with PPh and PPN relationships
         $invHeaders = InvHeader::with(['invPph', 'invPpn'])
+                            ->whereExists(function($query) {
+                                $query->select(DB::raw(1))
+                                      ->from('transaction_invoice')
+                                      ->whereRaw('transaction_invoice.inv_id = inv_header.inv_id');
+                            })
                             ->orderBy('created_at', 'desc')
                             ->get();
 
