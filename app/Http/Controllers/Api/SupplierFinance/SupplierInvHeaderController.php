@@ -26,8 +26,13 @@ class SupplierInvHeaderController extends Controller
     {
         $sp_code = Auth::user()->bp_code;
 
-        // Fetch inv_headers filtered by the authenticated user's bp_code, with related invLine
+        // Fetch inv_headers from transaction table filtered by the authenticated user's bp_code, with related invLine
         $invHeaders = InvHeader::with('invLine')
+            ->whereExists(function($query) {
+                $query->select(DB::raw(1))
+                      ->from('transaction_invoice')
+                      ->whereRaw('transaction_invoice.inv_id = inv_header.inv_id');
+            })
             ->where('bp_code', $sp_code)
             ->orderBy('created_at', 'desc')
             ->get();
