@@ -29,22 +29,9 @@ class FinanceInvHeaderController extends Controller
     public function getInvHeader()
     {
         // Load invoice headers from transaction table with PPh and PPN relationships
-        $invHeaders = InvHeader::with(['invPph', 'invPpn'])
-                            ->whereExists(function($query) {
-                                $query->select(DB::raw(1))
-                                      ->from('transaction_invoice')
-                                      ->whereRaw('transaction_invoice.inv_id = inv_header.inv_id');
-                            })
+        $invHeaders = InvHeader::with('invLine')
                             ->orderBy('created_at', 'desc')
                             ->get();
-
-        // Apply the same filtering condition for invLine relationship for each header
-        foreach ($invHeaders as $invHeader) {
-            $invHeader->load(['invLine' => function ($query) use ($invHeader) {
-                $query->where('bp_id', $invHeader->bp_code)
-                    ->where('inv_due_date', $invHeader->inv_date);
-            }]);
-        }
 
         return InvHeaderResource::collection($invHeaders);
     }

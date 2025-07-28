@@ -20,6 +20,8 @@ use App\Http\Controllers\Api\SupplierFinance\SupplierInvLineController;
 use App\Http\Controllers\Api\SupplierFinance\SupplierDashboardController;
 use App\Http\Controllers\Api\SupplierFinance\SupplierInvHeaderController;
 
+Route::get('tesinv', [SupplierInvHeaderController::class, 'getInvHeader']);
+Route::get('test/{bp_code}', [FinanceInvLineController::class, 'getUninvoicedInvLineTransaction']);
 Route::post('/login', [AuthController::class, 'login']);
 
 // Route for sync data from second database

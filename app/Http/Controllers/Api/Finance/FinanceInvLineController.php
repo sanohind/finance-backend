@@ -61,10 +61,8 @@ class FinanceInvLineController extends Controller
         // Start base query for the specific business partner and uninvoiced lines
         $query = InvLine::with('partner')
             ->where('bp_id', $bp_code)
-            ->whereNull('inv_supplier_no')
-            ->whereNull('inv_due_date');
-
-        // Apply filters based on query parameters present in the request
+            ->whereDoesntHave('invHeader');
+        // Apply filters based on query parameters present in e request
         // These are the same filters used by the GR Tracking form
 
         // Packing Slip filter - maps to 'packing_slip' field

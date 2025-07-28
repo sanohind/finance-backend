@@ -143,7 +143,9 @@ class SyncInvoiceLinesDailyJob implements ShouldQueue
                         'payment_doc_date' => $data->payment_doc_date
                     ]);
 
-                    // If record already existed, update it with latest data
+                    // If
+                    //
+                    //  already existed, update it with latest data
                     // if (!$invLine->wasRecentlyCreated) {
                     //     $invLine->update([
                     //         'bp_id' => $data->bp_id,
