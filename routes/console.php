@@ -11,7 +11,7 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote')->hourly();
 
 // Schedule the SyncInvoiceLinesDailyJob directly
-Schedule::job(new SyncInvoiceLinesDailyJob)->dailyAt('23:00'); // Runs daily at 11 PM
+Schedule::job(new SyncInvoiceLinesDailyJob)->dailyAt('23:00')->withoutOverlapping(); // Runs daily at 11 PM
 
 // Schedule the SyncInvoiceLinesMonthlyJob directly
-Schedule::job(new SyncInvoiceLinesMonthlyJob)->twiceMonthly(1, 16, '20:00'); // Runs on the 1st and 16th of the month at 8:00 PM
+Schedule::job(new SyncInvoiceLinesMonthlyJob)->twiceMonthly(1, 16, '20:00')->withoutOverlapping(); // Runs on the 1st and 16th of the month at 8:00 PM

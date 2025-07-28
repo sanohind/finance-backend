@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\SyncInvoiceLinesDailyJob;
 use App\Jobs\SyncManualJob;
 use Illuminate\Http\Request;
 use App\Models\ERP\InvReceipt;
@@ -31,8 +32,15 @@ Route::get('/stream/{type}/{filename}', [FinanceInvDocumentController::class, 's
 
 Route::get('sync', [InvoiceReceiptController::class, 'copyInvLines']);
 
+// tes sync 1
 Route::get('syncnow', function () {
     dispatch(new SyncManualJob());
+    return json_encode('Selesai');
+});
+
+// tes SyncInvoiceLinesDailyJob
+Route::get('synctes', function () {
+    dispatch(new SyncInvoiceLinesDailyJob());
     return json_encode('Selesai');
 });
 
