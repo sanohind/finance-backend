@@ -64,6 +64,9 @@ class SupplierInvHeaderController extends Controller
                 'inv_due_date'    => null,
             ]);
 
+            // Detach all lines from pivot table before deleting header
+            $invHeader->invLine()->detach();
+
             // Delete the invoice header record completely
             $invHeader->delete();
         });

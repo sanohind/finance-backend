@@ -1,0 +1,242 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\InvLine;
+use App\Models\ERP\InvReceipt;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+
+class DataSyncService
+{
+    /**
+     * Clean and validate ERP data before syncing
+     */
+    public function cleanErpData($data)
+    {
+        $cleaned = [];
+        
+        // Clean string fields
+        $stringFields = [
+            'po_no', 'bp_id', 'bp_name', 'currency', 'po_type', 'po_reference',
+            'receipt_no', 'receipt_line', 'gr_no', 'packing_slip', 'item_no',
+            'ics_code', 'ics_part', 'part_no', 'item_desc', 'item_group',
+            'item_type', 'item_type_desc', 'unit', 'inv_doc_no', 'inv_supplier_no',
+            'payment_doc'
+        ];
+        
+        foreach ($stringFields as $field) {
+            $cleaned[$field] = $this->cleanString($data->$field ?? null);
+        }
+        
+        // Clean numeric fields
+        $numericFields = [
+            'po_line', 'po_sequence', 'po_receipt_sequence', 'actual_receipt_year',
+            'actual_receipt_period', 'request_qty', 'actual_receipt_qty', 'approve_qty',
+            'receipt_amount', 'receipt_unit_price', 'inv_qty', 'inv_amount'
+        ];
+        
+        foreach ($numericFields as $field) {
+            $cleaned[$field] = $this->cleanNumeric($data->$field ?? null);
+        }
+        
+        // Clean boolean fields
+        $cleaned['is_final_receipt'] = $this->cleanBoolean($data->is_final_receipt ?? null);
+        $cleaned['is_confirmed'] = $this->cleanBoolean($data->is_confirmed ?? null);
+        
+        // Clean date fields
+        $dateFields = [
+            'actual_receipt_date', 'inv_doc_date', 'inv_due_date', 'payment_doc_date'
+        ];
+        
+        foreach ($dateFields as $field) {
+            $cleaned[$field] = $this->cleanDate($data->$field ?? null);
+        }
+        
+        return $cleaned;
+    }
+    
+    /**
+     * Clean string values
+     */
+    private function cleanString($value)
+    {
+        if (is_null($value)) {
+            return null;
+        }
+        
+        $cleaned = trim((string) $value);
+        return empty($cleaned) ? null : $cleaned;
+    }
+    
+    /**
+     * Clean numeric values
+     */
+    private function cleanNumeric($value)
+    {
+        if (is_null($value)) {
+            return 0;
+        }
+        
+        $cleaned = (float) $value;
+        return is_nan($cleaned) ? 0 : $cleaned;
+    }
+    
+    /**
+     * Clean boolean values
+     */
+    private function cleanBoolean($value)
+    {
+        if (is_null($value)) {
+            return false;
+        }
+        
+        if (is_bool($value)) {
+            return $value;
+        }
+        
+        $stringValue = strtolower(trim((string) $value));
+        return in_array($stringValue, ['true', '1', 'yes', 'y', 'on']);
+    }
+    
+    /**
+     * Clean date values
+     */
+    private function cleanDate($value)
+    {
+        if (is_null($value)) {
+            return null;
+        }
+        
+        try {
+            if ($value instanceof \Carbon\Carbon) {
+                return $value;
+            }
+            
+            if (is_string($value)) {
+                return \Carbon\Carbon::parse($value);
+            }
+            
+            return null;
+        } catch (\Exception $e) {
+            Log::warning("Invalid date value: {$value}");
+            return null;
+        }
+    }
+    
+    /**
+     * Validate required fields for sync
+     */
+    public function validateRequiredFields($data, $requiredFields = ['po_no', 'gr_no'])
+    {
+        foreach ($requiredFields as $field) {
+            if (empty($data[$field])) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    /**
+     * Create unique key for InvLine records
+     */
+    public function createUniqueKey($data, $keyType = 'po_gr')
+    {
+        switch ($keyType) {
+            case 'po_gr':
+                return [
+                    'po_no' => $data['po_no'],
+                    'gr_no' => $data['gr_no']
+                ];
+            case 'po_receipt':
+                return [
+                    'po_no' => $data['po_no'],
+                    'receipt_no' => $data['receipt_no'],
+                    'receipt_line' => $data['receipt_line']
+                ];
+            default:
+                return [
+                    'po_no' => $data['po_no'],
+                    'gr_no' => $data['gr_no']
+                ];
+        }
+    }
+    
+    /**
+     * Sync single record with proper validation
+     */
+    public function syncRecord($erpData, $keyType = 'po_gr')
+    {
+        try {
+            // Clean and validate data
+            $cleanedData = $this->cleanErpData($erpData);
+            
+            // Validate required fields
+            $requiredFields = $keyType === 'po_gr' ? ['po_no', 'gr_no'] : ['po_no', 'receipt_no', 'receipt_line'];
+            if (!$this->validateRequiredFields($cleanedData, $requiredFields)) {
+                Log::warning("Skipping record with missing required fields", [
+                    'po_no' => $cleanedData['po_no'] ?? 'N/A',
+                    'gr_no' => $cleanedData['gr_no'] ?? 'N/A',
+                    'receipt_no' => $cleanedData['receipt_no'] ?? 'N/A',
+                    'receipt_line' => $cleanedData['receipt_line'] ?? 'N/A'
+                ]);
+                return ['status' => 'skipped', 'reason' => 'missing_required_fields'];
+            }
+            
+            // Create unique key
+            $uniqueKey = $this->createUniqueKey($cleanedData, $keyType);
+            
+            // Check if record already exists
+            $existingRecord = InvLine::where($uniqueKey)->first();
+            
+            if ($existingRecord) {
+                Log::debug("Record already exists, updating", [
+                    'po_no' => $cleanedData['po_no'],
+                    'gr_no' => $cleanedData['gr_no'] ?? 'N/A'
+                ]);
+            }
+            
+            // Update or create record
+            InvLine::updateOrCreate($uniqueKey, $cleanedData);
+            
+            return ['status' => 'success', 'action' => $existingRecord ? 'updated' : 'created'];
+            
+        } catch (\Exception $e) {
+            Log::error("Error syncing record: " . $e->getMessage(), [
+                'po_no' => $cleanedData['po_no'] ?? 'N/A',
+                'gr_no' => $cleanedData['gr_no'] ?? 'N/A',
+                'error' => $e->getMessage()
+            ]);
+            return ['status' => 'error', 'reason' => $e->getMessage()];
+        }
+    }
+    
+    /**
+     * Get sync statistics
+     */
+    public function getSyncStats($results)
+    {
+        $stats = [
+            'total' => count($results),
+            'success' => 0,
+            'skipped' => 0,
+            'error' => 0
+        ];
+        
+        foreach ($results as $result) {
+            switch ($result['status']) {
+                case 'success':
+                    $stats['success']++;
+                    break;
+                case 'skipped':
+                    $stats['skipped']++;
+                    break;
+                case 'error':
+                    $stats['error']++;
+                    break;
+            }
+        }
+        
+        return $stats;
+    }
+} 

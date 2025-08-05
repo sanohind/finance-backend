@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 class AuthController
 {
@@ -31,54 +32,99 @@ class AuthController
             ], 422);
         }
 
-        // Find the user by username
-        $user = User::where('username', $request->username)->first();
+        try {
+            // Attempt authentication using Laravel's built-in Auth::attempt()
+            if (!Auth::attempt($request->only(['username', 'password']))) {
+                Log::warning('Failed login attempt', [
+                    'username' => $request->username,
+                    'ip' => $request->ip()
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Username or Password Invalid'
+                ], 401);
+            }
 
-        // Validate user existence and password with
-        if (!Auth::attempt($request->only(['username', 'password']))) {
+            // Retrieve the authenticated user
+            $user = Auth::user();
+
+            // Check if user status is inactive
+            if ($user->status == 0) {
+                Auth::logout();
+                
+                Log::warning('Inactive user login attempt', [
+                    'username' => $user->username,
+                    'user_id' => $user->id
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Account is inactive'
+                ], 403);
+            }
+
+            // Generate a token
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            Log::info('Successful login', [
+                'username' => $user->username,
+                'user_id' => $user->id,
+                'role' => $user->role
+            ]);
+
+            // Return token response
+            return response()->json([
+                'success' => true,
+                'access_token' => $token,
+                'role' => $user->role,
+                'bp_code' => $user->bp_code,
+                'name' => $user->name,
+                'token_type' => 'Bearer',
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Login error: ' . $e->getMessage(), [
+                'username' => $request->username,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Username or Password Invalid'
-            ], 401);
+                'message' => 'An error occurred during login. Please try again.'
+            ], 500);
         }
-
-        // Retrieve the authenticated user
-        $user = Auth::user();
-
-        // if user status inactive
-        if ($user->status==0) {
-            Auth::logout();
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Account is inactive'
-            ], 403);
-        }
-
-        // Generate a token
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        // Return token response
-        return response()->json([
-            'access_token' => $token,
-            'role' => $user->role,
-            'bp_code' => $user->bp_code,
-            'name' => $user->name,
-            'token_type' => 'Bearer',
-            // 'supplier_name' => ($user->role != 1||2||3||4) ? $user->partner->adr_line_1:"PT Sanoh Indonesia",
-        ]);
     }
 
     public function logout(Request $request)
     {
-        // Revoke token
-        $request->user()->currentAccessToken()->delete();
+        try {
+            // Revoke token
+            $request->user()->currentAccessToken()->delete();
 
-        // logout success respond
-        return response()->json([
-            'success' => true,
-            'message' => 'User successfully logged out'
-        ], 200);
+            Log::info('User logged out successfully', [
+                'user_id' => $request->user()->id,
+                'username' => $request->user()->username
+            ]);
+
+            // logout success respond
+            return response()->json([
+                'success' => true,
+                'message' => 'User successfully logged out'
+            ], 200);
+            
+        } catch (\Exception $e) {
+            Log::error('Logout error: ' . $e->getMessage(), [
+                'user_id' => $request->user()->id ?? 'unknown',
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred during logout'
+            ], 500);
+        }
     }
 }
 /**

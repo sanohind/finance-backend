@@ -268,9 +268,14 @@ class FinanceInvHeaderController extends Controller
                 // 3) Remove (uncheck) lines from invoice if needed
                 if (is_array($request->inv_line_remove)) {
                     foreach ($request->inv_line_remove as $lineId) {
+                        // Update InvLine record
                         InvLine::where('inv_line_id', $lineId)->update([
                             'inv_supplier_no' => null,
+                            'inv_due_date' => null,
                         ]);
+                        
+                        // Detach from pivot table
+                        $invHeader->invLine()->detach($lineId);
                     }
                 }
 
@@ -310,7 +315,9 @@ class FinanceInvHeaderController extends Controller
                             ->unique()
                             ->implode(', ');
 
-                        $taxAmountForPdf = $invHeader->total_dpp * 0.11;
+                        // Use PPN rate from database instead of hardcoded value
+                        $ppnRate = $invHeader->invPpn ? $invHeader->invPpn->ppn_rate : 0.11;
+                        $taxAmountForPdf = $invHeader->total_dpp * $ppnRate;
 
                         $pdfPphBaseAmount = $invHeader->pph_base_amount;
                         $pdfPphAmount = $invHeader->pph_amount;

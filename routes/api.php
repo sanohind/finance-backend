@@ -21,9 +21,17 @@ use App\Http\Controllers\Api\SupplierFinance\SupplierInvLineController;
 use App\Http\Controllers\Api\SupplierFinance\SupplierDashboardController;
 use App\Http\Controllers\Api\SupplierFinance\SupplierInvHeaderController;
 
-Route::get('tesinv', [SupplierInvHeaderController::class, 'getInvHeader']);
-Route::get('test/{bp_code}', [FinanceInvLineController::class, 'getUninvoicedInvLineTransaction']);
 Route::post('/login', [AuthController::class, 'login']);
+
+// Test route to verify API is working
+Route::get('test-api', function () {
+    return response()->json([
+        'success' => true,
+        'message' => 'API is working correctly',
+        'timestamp' => now()->toISOString(),
+        'environment' => config('app.env')
+    ]);
+});
 
 // Route for sync data from second database
 Route::get('local2/sync-inv-line', [LocalDataController::class, 'syncInvLine'])->middleware('auth:sanctum');
@@ -32,30 +40,17 @@ Route::get('/stream/{type}/{filename}', [FinanceInvDocumentController::class, 's
 
 Route::get('sync', [InvoiceReceiptController::class, 'copyInvLines']);
 
-// tes sync 1
-Route::get('syncnow', function () {
-    dispatch(new SyncManualJob());
-    return json_encode('Selesai');
-});
+// Manual sync routes (for development/testing only)
+Route::middleware(['auth:sanctum', 'userRole:1'])->group(function () {
+    Route::get('syncnow', function () {
+        dispatch(new SyncManualJob());
+        return response()->json(['message' => 'Sync job dispatched successfully']);
+    });
 
-// tes SyncInvoiceLinesDailyJob
-Route::get('synctes', function () {
-    dispatch(new SyncInvoiceLinesDailyJob());
-    return json_encode('Selesai');
-});
-
-Route::get('tes1', function () {
-    $currentYear = now()->year;
-    // dd($currentYear);
-            $currentMonth = now()->endOfMonth()->format('Y-m-d');
-            $oneMonthBefore = now()->subMonthNoOverflow()->startOfMonth()->format('Y-m-d');
-// dd("$currentMonth $oneMonthBefore");
-            // Get da6a from ERP
-            $sqlsrvData = InvReceipt::whereYear('payment_doc_date', $currentYear)
-                ->whereBetween('payment_doc_date', [$oneMonthBefore, $currentMonth])
-                ->get();
-    // $sqlsrvData = InvReceipt::where('payment_doc_date', '2025-06-05')->get();
-    return json_encode($sqlsrvData);
+    Route::get('synctes', function () {
+        dispatch(new SyncInvoiceLinesDailyJob());
+        return response()->json(['message' => 'Daily sync job dispatched successfully']);
+    });
 });
 
 // Admin routes
