@@ -16,15 +16,18 @@ class SupplierDashboardController extends Controller
         $user = Auth::user();
         $bp_code = $user->bp_code;
 
+        // Ambil seluruh bp_code parent & child
+        $bpCodes = Partner::relatedBpCodes($bp_code)->pluck('bp_code');
+
         // Initialize data array
         $data = [];
 
-        // Get the count of invoices with different statuses for the authenticated user
-        $data['new_invoices'] = InvHeader::where('bp_code', $bp_code)->where('status', 'New')->count();
-        $data['in_process_invoices'] = InvHeader::where('bp_code', $bp_code)->where('status', 'In Process')->count();
-        $data['rejected_invoices'] = InvHeader::where('bp_code', $bp_code)->where('status', 'Rejected')->count();
-        $data['ready_to_payment_invoices'] = InvHeader::where('bp_code', $bp_code)->where('status', 'Ready To Payment')->count();
-        $data['paid_invoices'] = InvHeader::where('bp_code', $bp_code)->where('status', 'Paid')->count();
+        // Get the count of invoices with different statuses for the authenticated user (unified)
+        $data['new_invoices'] = InvHeader::whereIn('bp_code', $bpCodes)->where('status', 'New')->count();
+        $data['in_process_invoices'] = InvHeader::whereIn('bp_code', $bpCodes)->where('status', 'In Process')->count();
+        $data['rejected_invoices'] = InvHeader::whereIn('bp_code', $bpCodes)->where('status', 'Rejected')->count();
+        $data['ready_to_payment_invoices'] = InvHeader::whereIn('bp_code', $bpCodes)->where('status', 'Ready To Payment')->count();
+        $data['paid_invoices'] = InvHeader::whereIn('bp_code', $bpCodes)->where('status', 'Paid')->count();
 
         return response()->json([
             'success' => true,
@@ -36,9 +39,9 @@ class SupplierDashboardController extends Controller
     public function getBusinessPartner()
     {
         $user = Auth::user();
-        $partner = Partner::where('bp_code', $user->bp_code)
-                          ->select('bp_code', 'bp_name', 'adr_line_1')
-                          ->first();
-        return response()->json($partner);
+        $partners = Partner::relatedBpCodes($user->bp_code)
+            ->select('bp_code', 'bp_name', 'adr_line_1')
+            ->get();
+        return response()->json($partners);
     }
 }

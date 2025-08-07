@@ -17,7 +17,12 @@ class UserController extends Controller
 {
     public function getBusinessPartner()
     {
-        $partners = Partner::where('bp_code', 'like', 'S%')->get();
+        $requestBpCode = request('bp_code');
+        if ($requestBpCode) {
+            $partners = Partner::relatedBpCodes($requestBpCode)->get();
+        } else {
+            $partners = Partner::all();
+        }
         return response()->json($partners);
     }
 

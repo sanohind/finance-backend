@@ -19,8 +19,10 @@ class FinanceInvLineController extends Controller
 
     public function getInvLineTransaction(Request $request, $bp_code)
     {
-        // Start base query for the specific business partner
-        $query = InvLine::with('partner')->where('bp_id', $bp_code);
+        // Ambil seluruh bp_code parent & child
+        $bpCodes = Partner::relatedBpCodes($bp_code)->pluck('bp_code');
+        // Start base query for the specific business partner (unified)
+        $query = InvLine::with('partner')->whereIn('bp_id', $bpCodes);
 
         // Apply filters based on query parameters present in the request
         // These are the main filters used by the GR Tracking form
@@ -58,9 +60,11 @@ class FinanceInvLineController extends Controller
 
     public function getUninvoicedInvLineTransaction(Request $request, $bp_code)
     {
-        // Start base query for the specific business partner and uninvoiced lines
+        // Ambil seluruh bp_code parent & child
+        $bpCodes = Partner::relatedBpCodes($bp_code)->pluck('bp_code');
+        // Start base query for the specific business partner and uninvoiced lines (unified)
         $query = InvLine::with('partner')
-            ->where('bp_id', $bp_code)
+            ->whereIn('bp_id', $bpCodes)
             ->whereDoesntHave('invHeader');
         // Apply filters based on query parameters present in e request
         // These are the same filters used by the GR Tracking form
@@ -98,14 +102,16 @@ class FinanceInvLineController extends Controller
 
     public function getOutstandingInvLine($bp_code)
     {
+        // Ambil seluruh bp_code parent & child
+        $bpCodes = Partner::relatedBpCodes($bp_code)->pluck('bp_code');
         // Determine the cutoff date (10 days ago)
         $cutoffDate = Carbon::now()->subDays(10)->toDateString();
 
-        // Get invoice lines where actual_receipt_date is <= cutoffDate
+        // Get invoice lines where actual_receipt_date is <= cutoffDate (unified)
         $invLines = InvLine::with('partner')
             ->whereDate('actual_receipt_date', '<=', $cutoffDate)
-            ->whereHas('partner', function ($q) use ($bp_code) {
-                $q->where('bp_code', $bp_code);
+            ->whereHas('partner', function ($q) use ($bpCodes) {
+                $q->whereIn('bp_code', $bpCodes);
             })
             ->get();
 

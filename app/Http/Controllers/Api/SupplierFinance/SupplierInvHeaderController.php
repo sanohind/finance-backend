@@ -25,13 +25,13 @@ class SupplierInvHeaderController extends Controller
     public function getInvHeader()
     {
         $sp_code = Auth::user()->bp_code;
-
-        // Fetch inv_headers from transaction table filtered by the authenticated user's bp_code, with related invLine
+        // Ambil seluruh bp_code parent & child
+        $bpCodes = \App\Models\Local\Partner::relatedBpCodes($sp_code)->pluck('bp_code');
+        // Fetch inv_headers dari seluruh bp_code terkait
         $invHeaders = InvHeader::with('invLine')
-            ->where('bp_code', $sp_code)
+            ->whereIn('bp_code', $bpCodes)
             ->orderBy('created_at', 'desc')
             ->get();
-        // dd($invHeaders->first()->invLine);
         return InvHeaderResource::collection($invHeaders);
     }
 
