@@ -39,6 +39,8 @@ Route::get('local2/sync-inv-line', [LocalDataController::class, 'syncInvLine'])-
 Route::get('/stream/{type}/{filename}', [FinanceInvDocumentController::class, 'stream']);
 
 Route::get('sync', [InvoiceReceiptController::class, 'copyInvLines']);
+Route::get('check-duplicates', [InvoiceReceiptController::class, 'checkDuplicates']);
+Route::get('clean-duplicates', [InvoiceReceiptController::class, 'cleanDuplicates']);
 
 // Manual sync routes (for development/testing only)
 Route::middleware(['auth:sanctum', 'userRole:1'])->group(function () {

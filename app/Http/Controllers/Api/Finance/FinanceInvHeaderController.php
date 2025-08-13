@@ -38,8 +38,11 @@ class FinanceInvHeaderController extends Controller
 
     public function getInvHeaderByBpCode($bp_code)
     {
+        // Normalize bp_code
+        $bp_code = trim(strtoupper($bp_code));
+        
         // Ambil seluruh bp_code parent & child
-        $bpCodes = Partner::relatedBpCodes($bp_code)->pluck('bp_code');
+        $bpCodes = Partner::getUnifiedBpCodes($bp_code);
         $invHeaders = InvHeader::whereIn('bp_code', $bpCodes)->get();
         return InvHeaderResource::collection($invHeaders);
     }

@@ -19,7 +19,8 @@ class UserController extends Controller
     {
         $requestBpCode = request('bp_code');
         if ($requestBpCode) {
-            $partners = Partner::relatedBpCodes($requestBpCode)->get();
+            $requestBpCode = trim(strtoupper($requestBpCode));
+            $partners = Partner::getUnifiedPartnerData($requestBpCode);
         } else {
             $partners = Partner::all();
         }

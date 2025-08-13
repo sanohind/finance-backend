@@ -19,19 +19,25 @@ use App\Models\InvPph;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\InvoiceCreateMail;
 use Illuminate\Support\Facades\Storage;
+use App\Services\BusinessPartnerUnifiedService;
 
 class SupplierInvHeaderController extends Controller
 {
+    protected $unifiedService;
+
+    public function __construct(BusinessPartnerUnifiedService $unifiedService)
+    {
+        $this->unifiedService = $unifiedService;
+    }
+
     public function getInvHeader()
     {
         $sp_code = Auth::user()->bp_code;
-        // Ambil seluruh bp_code parent & child
-        $bpCodes = \App\Models\Local\Partner::relatedBpCodes($sp_code)->pluck('bp_code');
-        // Fetch inv_headers dari seluruh bp_code terkait
-        $invHeaders = InvHeader::with('invLine')
-            ->whereIn('bp_code', $bpCodes)
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $sp_code = $this->unifiedService->normalizeBpCode($sp_code);
+        
+        // Get unified InvHeader data
+        $invHeaders = $this->unifiedService->getUnifiedInvHeaders($sp_code);
+        
         return InvHeaderResource::collection($invHeaders);
     }
 
@@ -42,10 +48,13 @@ class SupplierInvHeaderController extends Controller
         ]);
 
         $sp_code = Auth::user()->bp_code;
+        $sp_code = $this->unifiedService->normalizeBpCode($sp_code);
+        
+        $bpCodes = $this->unifiedService->getUnifiedBpCodes($sp_code);
 
         $invHeader = InvHeader::with('invLine')
             ->where('inv_id', $inv_id)
-            ->where('bp_code', $sp_code)
+            ->whereIn('bp_code', $bpCodes)
             ->where('status', 'New')
             ->first();
 
@@ -93,6 +102,7 @@ class SupplierInvHeaderController extends Controller
         $invHeader = DB::transaction(function () use ($request) {
             $request->validated();
             $sp_code = Auth::user()->bp_code;
+            $sp_code = $this->unifiedService->normalizeBpCode($sp_code);
 
             $total_dpp = 0;
 
