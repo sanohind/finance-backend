@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::connection('mysql')->create('inv_line', function (Blueprint $table) {
             $table->id('inv_line_id');
 
-            $table->string('po_no')->nullable();
+            $table->string('po_no', 50)->nullable();
 
             $table->string('bp_id')->nullable();
             $table->string('bp_name')->nullable();
@@ -29,12 +29,12 @@ return new class extends Migration
             $table->integer('actual_receipt_year')->nullable();
             $table->integer('actual_receipt_period')->nullable();
 
-            $table->string('receipt_no')->nullable();
-            $table->string('receipt_line')->nullable();
-            $table->string('gr_no')->nullable();
+            $table->string('receipt_no', 50)->nullable();
+            $table->string('receipt_line', 50)->nullable();
+            $table->string('gr_no', 50)->nullable();
             $table->string('packing_slip')->nullable();
 
-            $table->string('item_no')->nullable();
+            $table->string('item_no', 50)->nullable();
             $table->string('ics_code')->nullable();
             $table->string('ics_part')->nullable();
             $table->string('part_no')->nullable();
@@ -66,6 +66,15 @@ return new class extends Migration
             $table->date('payment_doc_date')->nullable();
 
             $table->timestamps();
+
+            // Unique index untuk mencegah duplikasi data
+            $table->unique([
+                'po_no',
+                'gr_no',
+                'receipt_no',
+                'receipt_line',
+                'item_no'
+            ], 'inv_line_unique_key');
         });
     }
 

@@ -142,77 +142,66 @@ class DataSyncService
      */
     public function createUniqueKey($data, $keyType = 'po_gr')
     {
-        switch ($keyType) {
-            case 'po_gr':
-                return [
-                    'po_no' => $data['po_no'],
-                    'gr_no' => $data['gr_no']
-                ];
-            case 'po_receipt':
-                return [
-                    'po_no' => $data['po_no'],
-                    'receipt_no' => $data['receipt_no'],
-                    'receipt_line' => $data['receipt_line']
-                ];
-            default:
-                return [
-                    'po_no' => $data['po_no'],
-                    'gr_no' => $data['gr_no']
-                ];
-        }
+        // Kunci unik baru: po_no, gr_no, receipt_no, receipt_line, item_no
+        $key = [
+            'po_no' => $data['po_no'] ?? null,
+            'gr_no' => $data['gr_no'] ?? null,
+            'receipt_no' => $data['receipt_no'] ?? null,
+            'receipt_line' => $data['receipt_line'] ?? null,
+            'item_no' => $data['item_no'] ?? null
+        ];
+        // Hapus key yang null agar tetap backward compatible jika field tidak ada
+        return array_filter($key, function($v) { return !is_null($v); });
     }
     
+
     /**
-     * Sync single record with proper validation
+     * Sync a batch of ERP data records with validation and upsert.
+     * @param iterable $erpDataList
+     * @param string $keyType
+     * @return array
+     */
+    public function batchSync(iterable $erpDataList, $keyType = 'po_gr')
+    {
+        $results = [];
+        foreach ($erpDataList as $erpData) {
+            $results[] = $this->syncRecord($erpData, $keyType);
+        }
+        return $results;
+    }
+
+    /**
+     * Sync single record with proper validation and upsert
      */
     public function syncRecord($erpData, $keyType = 'po_gr')
     {
+        $cleanedData = $this->cleanErpData($erpData);
+        $requiredFields = $keyType === 'po_gr' ? ['po_no', 'gr_no'] : ['po_no', 'receipt_no', 'receipt_line'];
+        if (!$this->validateRequiredFields($cleanedData, $requiredFields)) {
+            Log::warning("[SYNC] Skipped: missing required fields", $cleanedData);
+            return ['status' => 'skipped', 'reason' => 'missing_required_fields', 'data' => $cleanedData];
+        }
+        $uniqueKey = $this->createUniqueKey($cleanedData, $keyType);
         try {
-            // Clean and validate data
-            $cleanedData = $this->cleanErpData($erpData);
-            
-            // Validate required fields
-            $requiredFields = $keyType === 'po_gr' ? ['po_no', 'gr_no'] : ['po_no', 'receipt_no', 'receipt_line'];
-            if (!$this->validateRequiredFields($cleanedData, $requiredFields)) {
-                Log::warning("Skipping record with missing required fields", [
-                    'po_no' => $cleanedData['po_no'] ?? 'N/A',
-                    'gr_no' => $cleanedData['gr_no'] ?? 'N/A',
-                    'receipt_no' => $cleanedData['receipt_no'] ?? 'N/A',
-                    'receipt_line' => $cleanedData['receipt_line'] ?? 'N/A'
-                ]);
-                return ['status' => 'skipped', 'reason' => 'missing_required_fields'];
+            $result = InvLine::updateOrCreate($uniqueKey, $cleanedData);
+            $action = $result->wasRecentlyCreated ? 'created' : 'updated';
+            Log::info("[SYNC] $action", $uniqueKey);
+            return ['status' => 'success', 'action' => $action, 'data' => $uniqueKey];
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() === '23000') { // Duplicate entry error
+                Log::warning("[SYNC] Duplicate skipped", $uniqueKey);
+                return ['status' => 'skipped', 'reason' => 'duplicate', 'data' => $uniqueKey];
             }
-            
-            // Create unique key
-            $uniqueKey = $this->createUniqueKey($cleanedData, $keyType);
-            
-            // Check if record already exists
-            $existingRecord = InvLine::where($uniqueKey)->first();
-            
-            if ($existingRecord) {
-                Log::debug("Record already exists, updating", [
-                    'po_no' => $cleanedData['po_no'],
-                    'gr_no' => $cleanedData['gr_no'] ?? 'N/A'
-                ]);
-            }
-            
-            // Update or create record
-            InvLine::updateOrCreate($uniqueKey, $cleanedData);
-            
-            return ['status' => 'success', 'action' => $existingRecord ? 'updated' : 'created'];
-            
+            Log::error("[SYNC] DB error: " . $e->getMessage(), $uniqueKey);
+            return ['status' => 'error', 'reason' => $e->getMessage(), 'data' => $uniqueKey];
         } catch (\Exception $e) {
-            Log::error("Error syncing record: " . $e->getMessage(), [
-                'po_no' => $cleanedData['po_no'] ?? 'N/A',
-                'gr_no' => $cleanedData['gr_no'] ?? 'N/A',
-                'error' => $e->getMessage()
-            ]);
-            return ['status' => 'error', 'reason' => $e->getMessage()];
+            Log::error("[SYNC] Error: " . $e->getMessage(), $uniqueKey);
+            return ['status' => 'error', 'reason' => $e->getMessage(), 'data' => $uniqueKey];
         }
     }
     
     /**
-     * Get sync statistics
+     * Get sync statistics from batch results
      */
     public function getSyncStats($results)
     {
@@ -220,23 +209,27 @@ class DataSyncService
             'total' => count($results),
             'success' => 0,
             'skipped' => 0,
-            'error' => 0
+            'error' => 0,
+            'created' => 0,
+            'updated' => 0,
+            'duplicate' => 0
         ];
-        
         foreach ($results as $result) {
             switch ($result['status']) {
                 case 'success':
                     $stats['success']++;
+                    if (($result['action'] ?? '') === 'created') $stats['created']++;
+                    if (($result['action'] ?? '') === 'updated') $stats['updated']++;
                     break;
                 case 'skipped':
                     $stats['skipped']++;
+                    if (($result['reason'] ?? '') === 'duplicate') $stats['duplicate']++;
                     break;
                 case 'error':
                     $stats['error']++;
                     break;
             }
         }
-        
         return $stats;
     }
 } 

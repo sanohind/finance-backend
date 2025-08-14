@@ -38,13 +38,8 @@ class FinanceInvHeaderController extends Controller
 
     public function getInvHeaderByBpCode($bp_code)
     {
-        // Normalize bp_code
-        $bp_code = trim(strtoupper($bp_code));
-        
-        // Ambil seluruh bp_code parent & child
-        $bpCodes = Partner::getUnifiedBpCodes($bp_code);
-        $invHeaders = InvHeader::whereIn('bp_code', $bpCodes)->get();
-        return InvHeaderResource::collection($invHeaders);
+    $invHeaders = InvHeader::with('invLine')->where('bp_code', $bp_code)->get();
+    return InvHeaderResource::collection($invHeaders);
     }
 
     public function getPph()
@@ -61,17 +56,10 @@ class FinanceInvHeaderController extends Controller
 
     public function getInvHeaderDetail($inv_id)
     {
-        // Fetch InvHeader with invPpn and invPph relationships first
-        $invHeader = InvHeader::with(['invPpn', 'invPph'])->findOrFail($inv_id);
-
-        // Then manually load the filtered invLine relationship
-        $invHeader->load(['invLine' => function ($query) use ($invHeader) {
-            $query->where('bp_id', $invHeader->bp_code)
-                  ->where('inv_due_date', $invHeader->inv_date);
-        }]);
-
-        // Return the InvHeader data including related invLine, ppn, and pph
-        return new InvHeaderResource($invHeader);
+    // Fetch InvHeader with invPpn, invPph, and invLine relationships
+    $invHeader = InvHeader::with(['invPpn', 'invPph', 'invLine'])->findOrFail($inv_id);
+    // Return the InvHeader data including related invLine, ppn, and pph
+    return new InvHeaderResource($invHeader);
     }
 
     public function store(FinanceInvHeaderStoreRequest $request)
@@ -384,7 +372,8 @@ class FinanceInvHeaderController extends Controller
 
     public function updateStatusToInProcess($inv_id)
     {
-        $invHeader = InvHeader::where('inv_id', $inv_id)->where('status', 'New')->firstOrFail();
+
+    $invHeader = InvHeader::with('invLine')->where('inv_id', $inv_id)->where('status', 'New')->firstOrFail();
 
         $invHeader->update([
             'status' => 'In Process',
@@ -423,11 +412,12 @@ class FinanceInvHeaderController extends Controller
         $updatedBy = Auth::user()->name;
 
         // Bulk operation (array of invoice IDs in request body)
+
         if ($request->has('invoice_numbers') && is_array($request->input('invoice_numbers'))) {
             $invoiceIds = $request->input('invoice_numbers'); // Now expecting inv_id values
 
             // Validate that all invoices exist and have 'Paid' status using inv_id directly
-            $invHeaders = InvHeader::whereIn('inv_id', $invoiceIds)
+            $invHeaders = InvHeader::with('invLine')->whereIn('inv_id', $invoiceIds)
                 ->where('status', 'Paid')
                 ->get();
 
@@ -469,7 +459,8 @@ class FinanceInvHeaderController extends Controller
         $updatedBy = Auth::user()->name;
 
         // Find the invoice and validate it exists and has 'Ready To Payment' status
-        $invHeader = InvHeader::where('inv_id', $inv_id)
+
+        $invHeader = InvHeader::with('invLine')->where('inv_id', $inv_id)
             ->where('status', 'Ready To Payment')
             ->first();
 
