@@ -6,6 +6,7 @@
 A new notification Invoice Receipt has been confirmed by PT Sanoh Indonesia. Please login to check the same.
 
 {{-- Content --}}
+
 <x-mail::panel>
     <p>Supplier : {{ $data['bp_code'] }} - {{ $data['partner_address'] }}</p>
     <p>Invoice Number : {{ $data['inv_no'] }}</p>

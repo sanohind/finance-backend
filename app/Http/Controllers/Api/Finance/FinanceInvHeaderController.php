@@ -168,18 +168,44 @@ class FinanceInvHeaderController extends Controller
                 ]);
             }
 
+
             $partner = Partner::where('bp_code', $invHeader->bp_code)->select('adr_line_1')->first();
 
-            // Send email
-            $adminUsers = User::where('role', 2)->get();
-            foreach ($adminUsers as $adminUser) {
-                Mail::to($adminUser->email)->send(new InvoiceCreateMail([
-                    'partner_address' => $partner->adr_line_1 ?? '',
-                    'bp_code'         => $invHeader->bp_code,
-                    'inv_no'          => $request->inv_no,
-                    'status'          => $invHeader->status,
-                    'total_amount'    => $invHeader->total_amount,
-                ]));
+            // Send email to supplier (creator) and all admin (role=2)
+            try {
+                // Kirim ke semua supplier yang bp_code-nya termasuk unified bp_code
+                $unifiedBpCodes = \App\Models\Local\Partner::getUnifiedBpCodes($invHeader->bp_code);
+                $supplierUsers = User::whereIn('bp_code', $unifiedBpCodes)->get();
+                foreach ($supplierUsers as $supplierUser) {
+                    if ($supplierUser->email && filter_var($supplierUser->email, FILTER_VALIDATE_EMAIL)) {
+                        \Log::info('Kirim email invoice creation ke supplier', ['bp_code' => $supplierUser->bp_code, 'email' => $supplierUser->email]);
+                        Mail::to($supplierUser->email)
+                            ->send(new InvoiceCreateMail([
+                                'partner_address' => $partner->adr_line_1 ?? '',
+                                'bp_code'         => $invHeader->bp_code,
+                                'inv_no'          => $request->inv_no,
+                                'status'          => $invHeader->status,
+                                'total_amount'    => $invHeader->total_amount,
+                            ]));
+                    }
+                }
+                // Kirim ke semua admin (role=2)
+                $adminUsers = User::where('role', 2)->get();
+                foreach ($adminUsers as $adminUser) {
+                    if ($adminUser->email && filter_var($adminUser->email, FILTER_VALIDATE_EMAIL)) {
+                        \Log::info('Kirim email invoice creation ke admin', ['bp_code' => $adminUser->bp_code, 'email' => $adminUser->email]);
+                        Mail::to($adminUser->email)
+                            ->send(new InvoiceCreateMail([
+                                'partner_address' => $partner->adr_line_1 ?? '',
+                                'bp_code'         => $invHeader->bp_code,
+                                'inv_no'          => $request->inv_no,
+                                'status'          => $invHeader->status,
+                                'total_amount'    => $invHeader->total_amount,
+                            ]));
+                    }
+                }
+            } catch (\Exception $e) {
+                \Log::error('Gagal mengirim email invoice creation: ' . $e->getMessage());
             }
 
             return $invHeader;
@@ -330,18 +356,28 @@ class FinanceInvHeaderController extends Controller
                         }
                         $pdf->save($filepath);
 
-                        $supplierUser = User::where('bp_code', $invHeader->bp_code)->first();
-                        if ($supplierUser && $supplierUser->email) {
-                            Mail::to($supplierUser->email)->send(new InvoiceReadyMail([
-                                'partner_address' => $partner->adr_line_1 ?? '',
-                                'bp_code'         => $invHeader->bp_code,
-                                'inv_id'          => $invHeader->inv_id,
-                                'inv_no'          => $invHeader->inv_no,
-                                'status'          => $invHeader->status,
-                                'total_amount'    => $invHeader->total_amount,
-                                'plan_date'       => $invHeader->plan_date,
-                                'filepath'        => $filepath
-                            ]));
+                        // Kirim email ke supplier (bp_code) saja
+                        try {
+                            $unifiedBpCodes = \App\Models\Local\Partner::getUnifiedBpCodes($invHeader->bp_code);
+                            $supplierUsers = User::whereIn('bp_code', $unifiedBpCodes)->where('role', '!=', 2)->get();
+                            foreach ($supplierUsers as $supplierUser) {
+                                if ($supplierUser->email && filter_var($supplierUser->email, FILTER_VALIDATE_EMAIL)) {
+                                    \Log::info('Kirim email invoice ready to payment ke supplier', ['bp_code' => $supplierUser->bp_code, 'email' => $supplierUser->email]);
+                                    Mail::to($supplierUser->email)
+                                        ->send(new InvoiceReadyMail([
+                                            'partner_address' => $partner->adr_line_1 ?? '',
+                                            'bp_code'         => $invHeader->bp_code,
+                                            'inv_id'          => $invHeader->inv_id,
+                                            'inv_no'          => $invHeader->inv_no,
+                                            'status'          => $invHeader->status,
+                                            'total_amount'    => $invHeader->total_amount,
+                                            'plan_date'       => $invHeader->plan_date,
+                                            'filepath'        => $filepath
+                                        ]));
+                                }
+                            }
+                        } catch (\Exception $e) {
+                            \Log::error('Gagal mengirim email invoice ready to payment: ' . $e->getMessage());
                         }
 
                         $invHeader->update([
@@ -350,7 +386,7 @@ class FinanceInvHeaderController extends Controller
                         ]);
 
                         return response()->json([
-                            'message'        => "Invoice {$invHeader->inv_no} Is Ready To Payment",
+                            'message'        => "Invoice {$invHeader->inv_no} Is Ready To Payment dan email telah dikirim ke supplier.",
                             'receipt_path'   => "receipts/RECEIPT_{$invHeader->inv_id}.pdf",
                             'receipt_number' => $receiptNumber
                         ]);
