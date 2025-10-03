@@ -329,8 +329,10 @@ class FinanceInvHeaderController extends Controller
                         $receiptNumber = 'SANOH' . Carbon::parse($invHeader->updated_at)->format('Ymd') . '/' . ($receiptCount + 1);
 
                         $partner = Partner::where('bp_code', $invHeader->bp_code)->select("adr_line_1")->first();
-                        $poNumbers = InvLine::where('inv_supplier_no', $invHeader->inv_no)
+                        // Use relationship to get PO numbers from connected invoice lines only
+                        $poNumbers = $invHeader->invLine
                             ->pluck('po_no')
+                            ->filter() // Remove null/empty values
                             ->unique()
                             ->implode(', ');
 
