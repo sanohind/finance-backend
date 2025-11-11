@@ -175,7 +175,7 @@ class InvoiceReceiptController extends Controller
             
             // Get all data from SQL Server, from March 2025 onwards with validation
             $currentYear = 2025;
-            $startMonth = 6; // Juni
+            $startMonth = 9; // September
 
             $sqlsrvData = InvReceipt::whereYear('actual_receipt_date', $currentYear)
                                     ->whereMonth('actual_receipt_date', '>=', $startMonth)

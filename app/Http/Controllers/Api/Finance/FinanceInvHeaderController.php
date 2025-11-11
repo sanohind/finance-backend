@@ -79,7 +79,17 @@ class FinanceInvHeaderController extends Controller
                 if (!$firstInvLine) {
                     $firstInvLine = $invLine;
                 }
-                $total_dpp += $invLine->approve_qty * $invLine->receipt_unit_price;
+                
+                // Smart calculation: handle both full approval and partial rejection
+                if ($invLine->approve_qty == $invLine->actual_receipt_qty) {
+                    // Full approval: use receipt_amount from ERP
+                    // This handles decimal quantities, discounts, and adjustments accurately
+                    $total_dpp += $invLine->receipt_amount;
+                } else {
+                    // Partial approval/rejection: calculate based on approved quantity
+                    // This ensures we only pay for approved items
+                    $total_dpp += $invLine->approve_qty * $invLine->receipt_unit_price;
+                }
             }
 
             // Use bp_id from the first selected InvLine as bp_code for InvHeader

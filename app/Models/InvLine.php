@@ -62,6 +62,21 @@ class InvLine extends Model
         'payment_doc_date',
     ];
 
+    /**
+     * Type casting untuk handle decimal dengan benar
+     * Quantity: 4 decimal places untuk support fractional (0.25, 0.5, etc)
+     * Amount: 2 decimal places untuk currency standard
+     */
+    protected $casts = [
+        'request_qty' => 'decimal:4',
+        'actual_receipt_qty' => 'decimal:4',
+        'approve_qty' => 'decimal:4',
+        'receipt_amount' => 'decimal:2',
+        'receipt_unit_price' => 'decimal:2',
+        'inv_qty' => 'decimal:4',
+        'inv_amount' => 'decimal:2',
+    ];
+
     public function invHeader(): BelongsToMany
     {
         return $this->belongsToMany(InvHeader::class, 'transaction_invoice', 'inv_line_id', 'inv_id')

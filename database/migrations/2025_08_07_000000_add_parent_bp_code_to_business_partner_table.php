@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::connection('mysql2')->table('business_partner', function (Blueprint $table) {
-            $table->string('parent_bp_code')->nullable()->after('bp_code');
+            if (!Schema::connection('mysql2')->hasColumn('business_partner', 'parent_bp_code')) {
+                $table->string('parent_bp_code')->nullable()->after('bp_code');
+            }
         });
     }
 
@@ -22,7 +24,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::connection('mysql2')->table('business_partner', function (Blueprint $table) {
-            $table->dropColumn('parent_bp_code');
+            if (Schema::connection('mysql2')->hasColumn('business_partner', 'parent_bp_code')) {
+                $table->dropColumn('parent_bp_code');
+            }
         });
     }
 };
