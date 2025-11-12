@@ -8,11 +8,11 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class InvLineResource extends JsonResource
 {
     /**
-     * Format decimal value by removing trailing zeros
-     * Example: 0.1000 → 0.1, 0.1230 → 0.123
+     * Format decimal value by removing trailing zeros and using comma as decimal separator
+     * Example: 0.1000 → "0,1", 0.1230 → "0,123", 1000.5 → "1000,5"
      *
      * @param mixed $value
-     * @return mixed
+     * @return string|int|null
      */
     private function formatDecimal($value)
     {
@@ -31,7 +31,7 @@ class InvLineResource extends JsonResource
             return 0;
         }
 
-        // Convert to float for JSON encoding (JSON will automatically format without trailing zeros)
+        // Convert to float to normalize the value
         $floatValue = (float) $formatted;
 
         // If it's a whole number, return as integer for cleaner output
@@ -39,7 +39,10 @@ class InvLineResource extends JsonResource
             return (int) $floatValue;
         }
 
-        return $floatValue;
+        // Replace dot with comma for decimal separator
+        $formattedWithComma = str_replace('.', ',', $formatted);
+
+        return $formattedWithComma;
     }
 
     /**
