@@ -8,6 +8,41 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class InvLineResource extends JsonResource
 {
     /**
+     * Format decimal value by removing trailing zeros
+     * Example: 0.1000 → 0.1, 0.1230 → 0.123
+     *
+     * @param mixed $value
+     * @return mixed
+     */
+    private function formatDecimal($value)
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        // Convert to string first to preserve precision
+        $stringValue = (string) $value;
+
+        // Remove trailing zeros and decimal point if all decimals are zeros
+        $formatted = rtrim(rtrim($stringValue, '0'), '.');
+
+        // If the result is empty or just a minus sign, return 0
+        if ($formatted === '' || $formatted === '-') {
+            return 0;
+        }
+
+        // Convert to float for JSON encoding (JSON will automatically format without trailing zeros)
+        $floatValue = (float) $formatted;
+
+        // If it's a whole number, return as integer for cleaner output
+        if ($floatValue == (int) $floatValue) {
+            return (int) $floatValue;
+        }
+
+        return $floatValue;
+    }
+
+    /**
      * Transform the resource into an array.
      *
      * @return array<string, mixed>
@@ -40,9 +75,9 @@ class InvLineResource extends JsonResource
             'item_group'           => $this->item_group,
             'item_type'            => $this->item_type,
             'item_type_desc'       => $this->item_type_desc,
-            'request_qty'          => $this->request_qty,
-            'actual_receipt_qty'   => $this->actual_receipt_qty,
-            'approve_qty'          => $this->approve_qty,
+            'request_qty'          => $this->formatDecimal($this->request_qty),
+            'actual_receipt_qty'   => $this->formatDecimal($this->actual_receipt_qty),
+            'approve_qty'          => $this->formatDecimal($this->approve_qty),
             'unit'                 => $this->unit,
             'receipt_amount'       => $this->receipt_amount,
             'receipt_unit_price'   => $this->receipt_unit_price,
