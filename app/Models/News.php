@@ -15,11 +15,15 @@ class News extends Model
     protected $fillable = [
         'id',
         'title',
-        'description',
+        'carousel_images',
         'start_date',
         'end_date',
         'document',
         'created_by',
         'updated_by',
+    ];
+
+    protected $casts = [
+        'carousel_images' => 'array',
     ];
 }

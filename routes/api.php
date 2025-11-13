@@ -107,6 +107,12 @@ Route::middleware(['auth:sanctum', 'userRole:2'])->prefix('finance')->group(func
     Route::delete('news/delete/{id}', [FinanceNewsController::class, 'destroy']);
     Route::get('news/document/{filename}', [FinanceNewsController::class, 'streamDocument'])->middleware('auth');
 
+    // News Carousel Images
+    Route::post('news/{id}/carousel/upload', [FinanceNewsController::class, 'uploadCarouselImage']);
+    Route::put('news/{id}/carousel/{imageIndex}', [FinanceNewsController::class, 'updateCarouselImage']);
+    Route::delete('news/{id}/carousel/{imageIndex}', [FinanceNewsController::class, 'deleteCarouselImage']);
+    Route::get('news/carousel/{filename}', [FinanceNewsController::class, 'streamCarouselImage'])->middleware('auth');
+
     //Document
     // Route::get('/stream/{type}/{filename}', [FinanceInvHeaderController::class, 'stream']);
 
@@ -145,7 +151,8 @@ Route::middleware(['auth:sanctum', 'userRole:3'])->prefix('supplier-finance')->g
 
     // News
     Route::get('news', [SupplierNewsController::class, 'index']);
-    Route::get('news/document/{filename}', [SupplierNewsController::class, 'streamDocument'])->middleware('auth');
+    Route::get('news/document/{filename}', [SupplierNewsController::class, 'streamDocument']);
+    Route::get('news/carousel/{filename}', [SupplierNewsController::class, 'streamCarouselImage']);
 
     // Document
     Route::get('/stream/{type}/{filename}', [SupplierInvHeaderController::class, 'stream']);

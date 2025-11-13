@@ -30,4 +30,16 @@ class SupplierNewsController extends Controller
         }
         return response()->file(storage_path('app/public/' . $path));
     }
+
+    /**
+     * Stream a carousel image.
+     */
+    public function streamCarouselImage($filename)
+    {
+        $path = 'news_carousel/' . $filename;
+        if (!Storage::disk('public')->exists($path)) {
+            abort(404, 'Carousel image not found.');
+        }
+        return response()->file(storage_path('app/public/' . $path));
+    }
 }

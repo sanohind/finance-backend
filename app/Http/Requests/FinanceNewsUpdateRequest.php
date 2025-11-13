@@ -17,10 +17,11 @@ class FinanceNewsUpdateRequest extends FormRequest
     {
         return [
             'title' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'document' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5000',
+            'carousel_images' => 'nullable|array',
+            'carousel_images.*' => 'image|mimes:jpeg,jpg,png,webp|max:2048',
         ];
     }
 
@@ -30,8 +31,11 @@ class FinanceNewsUpdateRequest extends FormRequest
             'title.required' => 'The title field is required.',
             'title.string' => 'The title must be a string.',
             'title.max' => 'The title may not be greater than 255 characters.',
-            'description.string' => 'The description must be a string.',
             'start_date.required' => 'The start date field is required.',
+            'carousel_images.array' => 'The carousel images must be an array.',
+            'carousel_images.*.image' => 'Each carousel image must be an image file.',
+            'carousel_images.*.mimes' => 'Each carousel image must be a file of type: jpeg, jpg, png, webp.',
+            'carousel_images.*.max' => 'Each carousel image may not be larger than 2048 kilobytes.',
             'start_date.date' => 'The start date must be a valid date.',
             'end_date.required' => 'The end date field is required.',
             'end_date.date' => 'The end date must be a valid date.',
