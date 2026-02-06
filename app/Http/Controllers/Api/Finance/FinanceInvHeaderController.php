@@ -26,12 +26,44 @@ use App\Mail\InvoiceCreateMail;
 
 class FinanceInvHeaderController extends Controller
 {
-    public function getInvHeader()
+    public function getInvHeader(Request $request)
     {
-        // Load invoice headers from transaction table with PPh and PPN relationships
-        $invHeaders = InvHeader::with('invLine')
-                            ->orderBy('created_at', 'desc')
-                            ->get();
+        // Start query with relationships
+        $query = InvHeader::with('invLine');
+
+        // Apply filters
+        if ($request->filled('bp_code')) {
+            $query->where('bp_code', $request->bp_code);
+        }
+
+        if ($request->filled('inv_no')) {
+            $query->where('inv_no', 'like', '%' . $request->inv_no . '%');
+        }
+
+        if ($request->filled('invoice_date_from')) {
+            $query->whereDate('inv_date', '>=', $request->invoice_date_from);
+        }
+
+        if ($request->filled('invoice_date_to')) {
+            $query->whereDate('inv_date', '<=', $request->invoice_date_to);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('plan_date')) {
+            $query->whereDate('plan_date', $request->plan_date);
+        }
+
+        // Apply sorting
+        // Sort by status: 1. New, 2. In Process, 3. Ready To Payment, 4. Paid, 5. Rejected
+        $query->orderByRaw("FIELD(status, 'New', 'In Process', 'Ready To Payment', 'Paid', 'Rejected') ASC")
+              ->orderBy('created_at', 'desc');
+
+        // Apply pagination
+        $perPage = $request->input('per_page', 10); // Default to 10 if not specified
+        $invHeaders = $query->paginate($perPage);
 
         return InvHeaderResource::collection($invHeaders);
     }

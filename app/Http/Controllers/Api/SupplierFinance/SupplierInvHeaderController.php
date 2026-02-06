@@ -30,13 +30,49 @@ class SupplierInvHeaderController extends Controller
         $this->unifiedService = $unifiedService;
     }
 
-    public function getInvHeader()
+    public function getInvHeader(Request $request)
     {
         $sp_code = Auth::user()->bp_code;
         $sp_code = $this->unifiedService->normalizeBpCode($sp_code);
         
-        // Get unified InvHeader data
-        $invHeaders = $this->unifiedService->getUnifiedInvHeaders($sp_code);
+        // Get unified bp_codes matching the service logic
+        $bpCodes = $this->unifiedService->getUnifiedBpCodes($sp_code);
+        
+        // Start query with relationships and base restriction
+        $query = InvHeader::with('invLine')
+            ->whereIn('bp_code', $bpCodes);
+
+        // Apply filters
+        if ($request->filled('bp_code')) {
+            $query->where('bp_code', $request->bp_code);
+        }
+
+        if ($request->filled('inv_no')) {
+            $query->where('inv_no', 'like', '%' . $request->inv_no . '%');
+        }
+
+        if ($request->filled('invoice_date_from')) {
+            $query->whereDate('inv_date', '>=', $request->invoice_date_from);
+        }
+
+        if ($request->filled('invoice_date_to')) {
+            $query->whereDate('inv_date', '<=', $request->invoice_date_to);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('plan_date')) {
+            $query->whereDate('plan_date', $request->plan_date);
+        }
+
+        // Apply sorting
+        $query->orderBy('inv_date', 'desc');
+
+        // Apply pagination
+        $perPage = $request->input('per_page', 10);
+        $invHeaders = $query->paginate($perPage);
         
         return InvHeaderResource::collection($invHeaders);
     }
