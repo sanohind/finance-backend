@@ -31,29 +31,49 @@ class FinanceInvHeaderController extends Controller
         // Start query with relationships
         $query = InvHeader::with('invLine');
 
+        // Prepare filter metadata
+        $filterUsed = [];
+        $dateFrom = null;
+        $dateTo = null;
+
         // Apply filters
         if ($request->filled('bp_code')) {
             $query->where('bp_code', $request->bp_code);
+            $filterUsed['bp_code'] = $request->bp_code;
         }
 
         if ($request->filled('inv_no')) {
             $query->where('inv_no', 'like', '%' . $request->inv_no . '%');
+            $filterUsed['inv_no'] = $request->inv_no;
         }
 
-        if ($request->filled('invoice_date_from')) {
-            $query->whereDate('inv_date', '>=', $request->invoice_date_from);
-        }
+        // Default to last 30 days if no date filters provided
+        if (!$request->filled('invoice_date_from') && !$request->filled('invoice_date_to')) {
+            $dateFrom = now()->subDays(30)->format('Y-m-d');
+            $dateTo = now()->format('Y-m-d');
+            $query->whereDate('inv_date', '>=', $dateFrom);
+            $filterUsed['date_filter'] = 'default_30_days';
+        } else {
+            if ($request->filled('invoice_date_from')) {
+                $dateFrom = $request->invoice_date_from;
+                $query->whereDate('inv_date', '>=', $request->invoice_date_from);
+            }
 
-        if ($request->filled('invoice_date_to')) {
-            $query->whereDate('inv_date', '<=', $request->invoice_date_to);
+            if ($request->filled('invoice_date_to')) {
+                $dateTo = $request->invoice_date_to;
+                $query->whereDate('inv_date', '<=', $request->invoice_date_to);
+            }
+            $filterUsed['date_filter'] = 'custom';
         }
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
+            $filterUsed['status'] = $request->status;
         }
 
         if ($request->filled('plan_date')) {
             $query->whereDate('plan_date', $request->plan_date);
+            $filterUsed['plan_date'] = $request->plan_date;
         }
 
         // Apply sorting
@@ -61,11 +81,20 @@ class FinanceInvHeaderController extends Controller
         $query->orderByRaw("FIELD(status, 'New', 'In Process', 'Ready To Payment', 'Paid', 'Rejected') ASC")
               ->orderBy('created_at', 'desc');
 
-        // Apply pagination
-        $perPage = $request->input('per_page', 10); // Default to 10 if not specified
-        $invHeaders = $query->paginate($perPage);
+        // Get all results without pagination
+        $invHeaders = $query->get();
 
-        return InvHeaderResource::collection($invHeaders);
+        return response()->json([
+            'data' => InvHeaderResource::collection($invHeaders),
+            'filter_info' => [
+                'filters_applied' => $filterUsed,
+                'date_range' => [
+                    'from' => $dateFrom,
+                    'to' => $dateTo,
+                ],
+                'total_records' => $invHeaders->count(),
+            ]
+        ]);
     }
 
     public function getInvHeaderByBpCode($bp_code)
