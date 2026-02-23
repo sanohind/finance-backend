@@ -38,8 +38,9 @@ class SupplierInvHeaderController extends Controller
         // Get unified bp_codes matching the service logic
         $bpCodes = $this->unifiedService->getUnifiedBpCodes($sp_code);
         
-        // Start query with relationships and base restriction
-        $query = InvHeader::with('invLine')
+        // Start query without invLine relationship for better performance
+        // Invoice lines will be loaded separately when viewing details
+        $query = InvHeader::query()
             ->whereIn('bp_code', $bpCodes);
 
         // Prepare filter metadata
@@ -49,7 +50,13 @@ class SupplierInvHeaderController extends Controller
 
         // Apply filters
         if ($request->filled('bp_code')) {
-            $query->where('bp_code', $request->bp_code);
+            // Use unified bp_codes to support both old (SLSDELA-1) and new (SLSDELA) formats
+            $unifiedBpCodes = Partner::getUnifiedBpCodes(trim(strtoupper($request->bp_code)));
+            if ($unifiedBpCodes->isNotEmpty()) {
+                $query->whereIn('bp_code', $unifiedBpCodes);
+            } else {
+                $query->where('bp_code', $request->bp_code);
+            }
             $filterUsed['bp_code'] = $request->bp_code;
         }
 
@@ -58,23 +65,37 @@ class SupplierInvHeaderController extends Controller
             $filterUsed['inv_no'] = $request->inv_no;
         }
 
-        // Default to last 30 days if no date filters provided
-        if (!$request->filled('invoice_date_from') && !$request->filled('invoice_date_to')) {
-            $dateFrom = now()->subDays(30)->format('Y-m-d');
-            $dateTo = now()->format('Y-m-d');
-            $query->whereDate('inv_date', '>=', $dateFrom);
-            $filterUsed['date_filter'] = 'default_30_days';
-        } else {
+        // Check if any filter is provided by the user
+        $hasAnyFilter = $request->filled('bp_code')
+            || $request->filled('inv_no')
+            || $request->filled('invoice_date_from')
+            || $request->filled('invoice_date_to')
+            || $request->filled('status')
+            || $request->filled('plan_date');
+
+        // Apply date range filter:
+        // - If user provides invoice_date_from / invoice_date_to → use those
+        // - If user provides NO filter at all → default to last 30 days
+        // - If user provides other filters (status, plan_date, etc.) but no date → no date restriction
+        if ($request->filled('invoice_date_from') || $request->filled('invoice_date_to')) {
             if ($request->filled('invoice_date_from')) {
                 $dateFrom = $request->invoice_date_from;
                 $query->whereDate('inv_date', '>=', $request->invoice_date_from);
             }
-
             if ($request->filled('invoice_date_to')) {
                 $dateTo = $request->invoice_date_to;
                 $query->whereDate('inv_date', '<=', $request->invoice_date_to);
             }
             $filterUsed['date_filter'] = 'custom';
+        } elseif (!$hasAnyFilter) {
+            // No filters at all → default to last 30 days
+            $dateFrom = now()->subDays(30)->format('Y-m-d');
+            $dateTo = now()->format('Y-m-d');
+            $query->whereDate('inv_date', '>=', $dateFrom);
+            $filterUsed['date_filter'] = 'default_30_days';
+        } else {
+            // Other filters exist but no date filter → no date restriction
+            $filterUsed['date_filter'] = 'none';
         }
 
         if ($request->filled('status')) {
@@ -161,6 +182,24 @@ class SupplierInvHeaderController extends Controller
         $pph = InvPph::select('pph_id', 'pph_description')->get();
         return response()->json($pph);
     }
+
+    public function getInvHeaderDetail($inv_id)
+    {
+        $sp_code = Auth::user()->bp_code;
+        $sp_code = $this->unifiedService->normalizeBpCode($sp_code);
+        
+        $bpCodes = $this->unifiedService->getUnifiedBpCodes($sp_code);
+        
+        // Fetch InvHeader with invPpn, invPph, and invLine relationships
+        // Only allow access to invoices belonging to this supplier's bp_codes
+        $invHeader = InvHeader::with(['invPpn', 'invPph', 'invLine'])
+            ->whereIn('bp_code', $bpCodes)
+            ->findOrFail($inv_id);
+            
+        // Return the InvHeader data including related invLine, ppn, and pph
+        return new InvHeaderResource($invHeader);
+    }
+
 
     public function store(SupplierInvHeaderStoreRequest $request)
     {

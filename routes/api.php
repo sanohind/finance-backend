@@ -147,6 +147,7 @@ Route::middleware(['auth:sanctum', 'userRole:3'])->prefix('supplier-finance')->g
     // Invoice management
     Route::get('inv-header', [SupplierInvHeaderController::class, 'getInvHeader']);
     Route::post('inv-header/store', [SupplierInvHeaderController::class, 'store']);
+    Route::get('inv-header/detail/{inv_id}', [SupplierInvHeaderController::class, 'getInvHeaderDetail']);
     Route::put('inv-header/reject/{inv_id}', [SupplierInvHeaderController::class, 'rejectInvoice']);
 
     // News

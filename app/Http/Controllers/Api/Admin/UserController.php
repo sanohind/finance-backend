@@ -18,13 +18,30 @@ class UserController extends Controller
     public function getBusinessPartner()
     {
         $requestBpCode = request('bp_code');
+
         if ($requestBpCode) {
+            // When filtering by a specific bp_code (old or new format),
+            // return unified data (parent + all related children merged)
             $requestBpCode = trim(strtoupper($requestBpCode));
             $partners = Partner::getUnifiedPartnerData($requestBpCode);
         } else {
-            $partners = Partner::all();
+            // When listing all partners, only show parent records (parent_bp_code IS NULL)
+            // to avoid duplicates from old bp_codes (e.g. SLSDELA-1, SLSDELA-2)
+            $partners = Partner::whereNull('parent_bp_code')
+                ->orderBy('bp_code')
+                ->get();
         }
-        return response()->json($partners);
+
+        // Map to consistent format with adr_line_1 for frontend compatibility
+        $result = $partners->map(function ($partner) {
+            return [
+                'bp_code'   => $partner->bp_code,
+                'bp_name'   => $partner->bp_name,
+                'adr_line_1' => $partner->adr_line_1 ?? '',
+            ];
+        });
+
+        return response()->json($result);
     }
 
     public function index()
