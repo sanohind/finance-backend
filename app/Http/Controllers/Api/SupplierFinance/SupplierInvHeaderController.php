@@ -91,7 +91,7 @@ class SupplierInvHeaderController extends Controller
             // No filters at all → default to last 30 days
             $dateFrom = now()->subDays(30)->format('Y-m-d');
             $dateTo = now()->format('Y-m-d');
-            $query->whereDate('inv_date', '>=', $dateFrom);
+            $query->whereDate('created_at', '>=', $dateFrom);
             $filterUsed['date_filter'] = 'default_30_days';
         } else {
             // Other filters exist but no date filter → no date restriction
